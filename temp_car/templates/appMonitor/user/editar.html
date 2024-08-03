@@ -1,0 +1,198 @@
+{% extends 'appMonitor/baseDashboard.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+Editar Usuario
+{% endblock %}
+
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #f5f7fa, #cdd7e0);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        margin-top: 30px;
+    }
+
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        background: #ffffff;
+        border: none;
+        max-width: 600px; /* Ajuste el ancho máximo de la tarjeta */
+        margin: auto;
+    }
+
+    .card-header {
+        background: #4082c9;
+        color: #ffffff;
+        padding: 20px;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .card-body {
+        padding: 20px 30px; /* Reducir el padding para hacer el formulario más compacto */
+    }
+
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.075);
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.25);
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+    }
+
+    .form-check-label {
+        margin-left: 10px;
+        font-weight: 400;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 16px;
+        transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .alert-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        width: 300px;
+    }
+
+    .alert {
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    Editar Usuario
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        {% if messages %}
+                        <div id="alert-container" class="alert-container">
+                          <div class="alert alert-danger" role="alert">
+                            {% for message in messages %}
+                            {{ message }}
+                            {% endfor %}
+                          </div>
+                        </div>
+                        <script>
+                          // Mostrar la alerta flotante cuando hay mensajes
+                          window.onload = function() {
+                            document.getElementById('alert-container').style.display = 'block';
+                          };
+                        </script>
+                        {% endif %}
+                        <div class="mb-3">
+                            <label for="id_nombre" class="form-label">Nombres:</label>
+                            <input type="text" id="id_nombre" name="nombre" value="{{ profile.nombre }}" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Por favor ingrese los nombres.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_apellido" class="form-label">Apellidos:</label>
+                            <input type="text" id="id_apellido" name="apellido" value="{{ profile.apellido }}" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Por favor ingrese los apellidos.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_cedula" class="form-label">Cédula:</label>
+                            <input type="text" id="id_cedula" name="cedula" value="{{ profile.cedula }}" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Por favor ingrese la cédula.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">Email:</label>
+                            <input type="email" id="id_email" name="email" value="{{ profile.email }}" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Por favor ingrese un email válido.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_telefono" class="form-label">Teléfono:</label>
+                            <input type="text" id="id_telefono" name="telefono" value="{{ profile.telefono }}" class="form-control" required>
+                            <div class="invalid-feedback">
+                                Por favor ingrese el número de teléfono.
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" id="id_is_staff" name="is_staff" class="form-check-input" {% if user.is_staff %} checked {% endif %}>
+                            <label for="id_is_staff" class="form-check-label">Es administrador</label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Guardar Cambios</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}
