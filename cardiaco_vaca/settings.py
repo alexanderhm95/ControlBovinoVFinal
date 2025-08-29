@@ -60,6 +60,12 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
+# Permitir el dominio de producción para CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'https://pmonitunl.vercel.app',
+    "https://controlbovinovfinal-production.up.railway.app"
+]
+
 #AUTH_USER_MODEL = 'temp_car.CustomUser'
 # Application definition
 
