@@ -1,0 +1,1616 @@
+[
+{
+  "model": "temp_car.personalinfo",
+  "pk": 1,
+  "fields": {
+    "cedula": "1102733704",
+    "telefono": "0988435345",
+    "nombre": "Lucia Lucia",
+    "apellido": "Herrera Martinez",
+    "email": "baherreram@gmail.com"
+  }
+},
+{
+  "model": "temp_car.personalinfo",
+  "pk": 2,
+  "fields": {
+    "cedula": "1150019204",
+    "telefono": "0993239043",
+    "nombre": "Lorena Margoth",
+    "apellido": "Sarango",
+    "email": "wamid38369@devncie.com"
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 1,
+  "fields": {
+    "valor": 84
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 2,
+  "fields": {
+    "valor": 84
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 3,
+  "fields": {
+    "valor": 60
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 4,
+  "fields": {
+    "valor": 60
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 5,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 6,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 7,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 8,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 9,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 10,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 11,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 12,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 13,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 14,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 15,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 16,
+  "fields": {
+    "valor": 25
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 17,
+  "fields": {
+    "valor": 27
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 18,
+  "fields": {
+    "valor": 30
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 19,
+  "fields": {
+    "valor": 31
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 20,
+  "fields": {
+    "valor": 32
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 21,
+  "fields": {
+    "valor": 33
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 22,
+  "fields": {
+    "valor": 33
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 23,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 24,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 25,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 26,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 27,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 28,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 29,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 30,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 31,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 32,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 33,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 34,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 35,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 36,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 37,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 38,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 39,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 40,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 41,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 42,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 43,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 44,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 45,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 46,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 47,
+  "fields": {
+    "valor": 37
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 48,
+  "fields": {
+    "valor": 36
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 49,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 50,
+  "fields": {
+    "valor": 35
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 51,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 52,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 53,
+  "fields": {
+    "valor": 33
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 54,
+  "fields": {
+    "valor": 33
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 55,
+  "fields": {
+    "valor": 33
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 56,
+  "fields": {
+    "valor": 32
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 57,
+  "fields": {
+    "valor": 32
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 58,
+  "fields": {
+    "valor": 32
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 59,
+  "fields": {
+    "valor": 37
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 60,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 61,
+  "fields": {
+    "valor": 39
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 62,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 63,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 64,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 65,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 66,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 67,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 68,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 69,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 70,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 71,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 72,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 73,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 74,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 75,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 76,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 77,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 78,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 79,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 80,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 81,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 82,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 83,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 84,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 85,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 86,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 87,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 88,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 89,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.temperatura",
+  "pk": 90,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 1,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 2,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 3,
+  "fields": {
+    "valor": 34
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 4,
+  "fields": {
+    "valor": 44
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 5,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 6,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 7,
+  "fields": {
+    "valor": 64
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 8,
+  "fields": {
+    "valor": 72
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 9,
+  "fields": {
+    "valor": 68
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 10,
+  "fields": {
+    "valor": 66
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 11,
+  "fields": {
+    "valor": 71
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 12,
+  "fields": {
+    "valor": 68
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 13,
+  "fields": {
+    "valor": 68
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 14,
+  "fields": {
+    "valor": 66
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 15,
+  "fields": {
+    "valor": 66
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 16,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 17,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 18,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 19,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 20,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 21,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 22,
+  "fields": {
+    "valor": 68
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 23,
+  "fields": {
+    "valor": 50
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 24,
+  "fields": {
+    "valor": 60
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 25,
+  "fields": {
+    "valor": 74
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 26,
+  "fields": {
+    "valor": 81
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 27,
+  "fields": {
+    "valor": 84
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 28,
+  "fields": {
+    "valor": 84
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 29,
+  "fields": {
+    "valor": 43
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 30,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 31,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 32,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 33,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 34,
+  "fields": {
+    "valor": 38
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 35,
+  "fields": {
+    "valor": 78
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 36,
+  "fields": {
+    "valor": 49
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 37,
+  "fields": {
+    "valor": 44
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 38,
+  "fields": {
+    "valor": 44
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 39,
+  "fields": {
+    "valor": 45
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 40,
+  "fields": {
+    "valor": 45
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 41,
+  "fields": {
+    "valor": 45
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 42,
+  "fields": {
+    "valor": 45
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 43,
+  "fields": {
+    "valor": 94
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 44,
+  "fields": {
+    "valor": 77
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 45,
+  "fields": {
+    "valor": 87
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 46,
+  "fields": {
+    "valor": 88
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 47,
+  "fields": {
+    "valor": 75
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 48,
+  "fields": {
+    "valor": 75
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 49,
+  "fields": {
+    "valor": 67
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 50,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 51,
+  "fields": {
+    "valor": 80
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 52,
+  "fields": {
+    "valor": 79
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 53,
+  "fields": {
+    "valor": 79
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 54,
+  "fields": {
+    "valor": 65
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 55,
+  "fields": {
+    "valor": 78
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 56,
+  "fields": {
+    "valor": 79
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 57,
+  "fields": {
+    "valor": 78
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 58,
+  "fields": {
+    "valor": 78
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 59,
+  "fields": {
+    "valor": 48
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 60,
+  "fields": {
+    "valor": 45
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 61,
+  "fields": {
+    "valor": 44
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 62,
+  "fields": {
+    "valor": 45
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 63,
+  "fields": {
+    "valor": 43
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 64,
+  "fields": {
+    "valor": 53
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 65,
+  "fields": {
+    "valor": 52
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 66,
+  "fields": {
+    "valor": 60
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 67,
+  "fields": {
+    "valor": 57
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 68,
+  "fields": {
+    "valor": 57
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 69,
+  "fields": {
+    "valor": 44
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 70,
+  "fields": {
+    "valor": 49
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 71,
+  "fields": {
+    "valor": 56
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 72,
+  "fields": {
+    "valor": 50
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 73,
+  "fields": {
+    "valor": 44
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 74,
+  "fields": {
+    "valor": 42
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 75,
+  "fields": {
+    "valor": 54
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 76,
+  "fields": {
+    "valor": 59
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 77,
+  "fields": {
+    "valor": 41
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 78,
+  "fields": {
+    "valor": 50
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 79,
+  "fields": {
+    "valor": 50
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 80,
+  "fields": {
+    "valor": 51
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 81,
+  "fields": {
+    "valor": 48
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 82,
+  "fields": {
+    "valor": 57
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 83,
+  "fields": {
+    "valor": 53
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 84,
+  "fields": {
+    "valor": 50
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 85,
+  "fields": {
+    "valor": 53
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 86,
+  "fields": {
+    "valor": 50
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 87,
+  "fields": {
+    "valor": 42
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 88,
+  "fields": {
+    "valor": 53
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 89,
+  "fields": {
+    "valor": 46
+  }
+},
+{
+  "model": "temp_car.pulsaciones",
+  "pk": 90,
+  "fields": {
+    "valor": 52
+  }
+},
+{
+  "model": "temp_car.bovinos",
+  "pk": 2,
+  "fields": {
+    "idCollar": 2,
+    "macCollar": "21-21-22",
+    "nombre": "Salome",
+    "fecha_registro": "2024-06-10"
+  }
+},
+{
+  "model": "temp_car.bovinos",
+  "pk": 4,
+  "fields": {
+    "idCollar": 1,
+    "macCollar": "78:21:84:7D:AF:CC",
+    "nombre": "Sofia",
+    "fecha_registro": "2024-06-11"
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 67,
+  "fields": {
+    "id_Temperatura": 67,
+    "id_Pulsaciones": 67,
+    "fecha_lectura": "2024-06-24",
+    "hora_lectura": "08:50:45",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 68,
+  "fields": {
+    "id_Temperatura": 68,
+    "id_Pulsaciones": 68,
+    "fecha_lectura": "2024-06-24",
+    "hora_lectura": "16:50:50",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 69,
+  "fields": {
+    "id_Temperatura": 69,
+    "id_Pulsaciones": 69,
+    "fecha_lectura": "2024-06-25",
+    "hora_lectura": "08:50:52",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 70,
+  "fields": {
+    "id_Temperatura": 70,
+    "id_Pulsaciones": 70,
+    "fecha_lectura": "2024-06-25",
+    "hora_lectura": "16:50:53",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 71,
+  "fields": {
+    "id_Temperatura": 71,
+    "id_Pulsaciones": 71,
+    "fecha_lectura": "2024-06-26",
+    "hora_lectura": "08:50:54",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 72,
+  "fields": {
+    "id_Temperatura": 72,
+    "id_Pulsaciones": 72,
+    "fecha_lectura": "2024-06-26",
+    "hora_lectura": "16:50:55",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 73,
+  "fields": {
+    "id_Temperatura": 73,
+    "id_Pulsaciones": 73,
+    "fecha_lectura": "2024-06-27",
+    "hora_lectura": "08:50:57",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 74,
+  "fields": {
+    "id_Temperatura": 74,
+    "id_Pulsaciones": 74,
+    "fecha_lectura": "2024-06-27",
+    "hora_lectura": "16:50:58",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 75,
+  "fields": {
+    "id_Temperatura": 75,
+    "id_Pulsaciones": 75,
+    "fecha_lectura": "2024-06-28",
+    "hora_lectura": "08:50:59",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 76,
+  "fields": {
+    "id_Temperatura": 76,
+    "id_Pulsaciones": 76,
+    "fecha_lectura": "2024-06-28",
+    "hora_lectura": "16:51:01",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 77,
+  "fields": {
+    "id_Temperatura": 77,
+    "id_Pulsaciones": 77,
+    "fecha_lectura": "2024-06-24",
+    "hora_lectura": "08:51:31",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 78,
+  "fields": {
+    "id_Temperatura": 78,
+    "id_Pulsaciones": 78,
+    "fecha_lectura": "2024-06-24",
+    "hora_lectura": "16:51:33",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 79,
+  "fields": {
+    "id_Temperatura": 79,
+    "id_Pulsaciones": 79,
+    "fecha_lectura": "2024-06-25",
+    "hora_lectura": "08:51:34",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 80,
+  "fields": {
+    "id_Temperatura": 80,
+    "id_Pulsaciones": 80,
+    "fecha_lectura": "2024-06-25",
+    "hora_lectura": "16:51:36",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 81,
+  "fields": {
+    "id_Temperatura": 81,
+    "id_Pulsaciones": 81,
+    "fecha_lectura": "2024-06-26",
+    "hora_lectura": "08:51:37",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 82,
+  "fields": {
+    "id_Temperatura": 82,
+    "id_Pulsaciones": 82,
+    "fecha_lectura": "2024-06-26",
+    "hora_lectura": "16:51:39",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 83,
+  "fields": {
+    "id_Temperatura": 83,
+    "id_Pulsaciones": 83,
+    "fecha_lectura": "2024-06-27",
+    "hora_lectura": "08:51:40",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 84,
+  "fields": {
+    "id_Temperatura": 84,
+    "id_Pulsaciones": 84,
+    "fecha_lectura": "2024-06-27",
+    "hora_lectura": "16:51:41",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 85,
+  "fields": {
+    "id_Temperatura": 85,
+    "id_Pulsaciones": 85,
+    "fecha_lectura": "2024-06-28",
+    "hora_lectura": "08:51:43",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 86,
+  "fields": {
+    "id_Temperatura": 86,
+    "id_Pulsaciones": 86,
+    "fecha_lectura": "2024-06-28",
+    "hora_lectura": "16:51:44",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 87,
+  "fields": {
+    "id_Temperatura": 87,
+    "id_Pulsaciones": 87,
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "09:01:02",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 88,
+  "fields": {
+    "id_Temperatura": 88,
+    "id_Pulsaciones": 88,
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "09:01:07",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 89,
+  "fields": {
+    "id_Temperatura": 89,
+    "id_Pulsaciones": 89,
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "14:14:15.562",
+    "id_Bovino": 4
+  }
+},
+{
+  "model": "temp_car.lectura",
+  "pk": 90,
+  "fields": {
+    "id_Temperatura": 90,
+    "id_Pulsaciones": 90,
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "14:14:30.368",
+    "id_Bovino": 2
+  }
+},
+{
+  "model": "temp_car.controlmonitoreo",
+  "pk": 60,
+  "fields": {
+    "id_Lectura": 88,
+    "id_User": [
+      "baherreram@gmail.com"
+    ],
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "09:01:09.094"
+  }
+},
+{
+  "model": "temp_car.controlmonitoreo",
+  "pk": 61,
+  "fields": {
+    "id_Lectura": 87,
+    "id_User": [
+      "baherreram@gmail.com"
+    ],
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "09:02:08.337"
+  }
+},
+{
+  "model": "temp_car.controlmonitoreo",
+  "pk": 62,
+  "fields": {
+    "id_Lectura": 89,
+    "id_User": [
+      "baherreram@gmail.com"
+    ],
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "14:14:41.147"
+  }
+},
+{
+  "model": "temp_car.controlmonitoreo",
+  "pk": 63,
+  "fields": {
+    "id_Lectura": 90,
+    "id_User": [
+      "baherreram@gmail.com"
+    ],
+    "fecha_lectura": "2024-06-30",
+    "hora_lectura": "14:14:48.495"
+  }
+}
+]
