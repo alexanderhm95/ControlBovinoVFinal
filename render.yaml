@@ -23,10 +23,6 @@ services:
       - key: ALLOWED_HOSTS
         value: "*"
     autoDeploy: true
-    disk:
-      name: controlbovino-disk
-      mountPath: /opt/render/project/src/db
-      sizeGB: 1
 
 databases:
   - name: controlbovino-db
