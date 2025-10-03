@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: controlbovino-web
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+      python manage.py migrate
+    startCommand: gunicorn cardiaco_vaca.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: cardiaco_vaca.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: ALLOWED_HOSTS
+        value: "*"
+    autoDeploy: true
+    disk:
+      name: controlbovino-disk
+      mountPath: /opt/render/project/src/db
+      sizeGB: 1
+
+databases:
+  - name: controlbovino-db
+    databaseName: controlbovino
+    user: controlbovino_user
+    region: oregon
+    plan: free
