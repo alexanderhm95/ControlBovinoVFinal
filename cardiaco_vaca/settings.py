@@ -27,7 +27,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-gse7w_va40r(70@*(*6x*
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = [
+    'control-bovino-app.azurewebsites.net',
+    '127.0.0.1',
+    'localhost',
+    'pmonitunl.vercel.app',
+    'controlbovinovfinal-production.up.railway.app',
+    '.herokuapp.com',  # Permite todos los subdominios de Heroku
+] + os.environ.get('ALLOWED_HOSTS', '').split(',')
 LOGIN_REDIRECT_URL = ('dashboard_redirect')
 LOGOUT_REDIRECT_URL = ('login')
 
@@ -63,9 +70,11 @@ CORS_ALLOW_HEADERS = [
 
 # Permitir el dominio de producción para CSRF
 CSRF_TRUSTED_ORIGINS = [
+    'https://control-bovino-app.azurewebsites.net',
     'https://pmonitunl.vercel.app',
     "https://controlbovinovfinal-production.up.railway.app",
-    "https://*.onrender.com"
+    "https://*.onrender.com",
+    "https://*.herokuapp.com"
 ]
 
 #AUTH_USER_MODEL = 'temp_car.CustomUser'
@@ -180,7 +189,23 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-STATIC_URL = '/static/'
+
+# Azure Blob Storage para archivos estáticos (ahorra créditos vs App Service storage)
+AZURE_ACCOUNT_NAME = os.environ.get('AZURE_ACCOUNT_NAME')
+AZURE_ACCOUNT_KEY = os.environ.get('AZURE_ACCOUNT_KEY')
+AZURE_CONTAINER = os.environ.get('AZURE_CONTAINER', 'staticfiles')
+
+if AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY:
+    DEFAULT_FILE_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    STATICFILES_STORAGE = 'storages.backends.azure_storage.AzureStorage'
+    
+    AZURE_LOCATION = 'static'
+    STATIC_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_CONTAINER}/static/'
+    MEDIA_URL = f'https://{AZURE_ACCOUNT_NAME}.blob.core.windows.net/{AZURE_CONTAINER}/media/'
+else:
+    STATIC_URL = '/static/'
+    # Configuración adicional para WhiteNoise
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'temp_car/static'),  # Usa barras normales y elimina las barras invertidas
@@ -188,7 +213,11 @@ STATICFILES_DIRS = [
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Directorio para collectstatic
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-MEDIA_URL = '/media/'
+if AZURE_ACCOUNT_NAME and AZURE_ACCOUNT_KEY:
+    # Los archivos media se sirven desde Azure Blob
+    pass
+else:
+    MEDIA_URL = '/media/'
 
 
 # Default primary key field type
@@ -214,8 +243,7 @@ EMAIL_HOST_PASSWORD = 'nydandvfcibguwhf'
 SITE_ID = 1  # Reemplaza 1 con el ID de tu sitio
 DEFAULT_FROM_EMAIL = 'vacauniversidad@gmail.com'  # Reemplaza con tu dirección de correo
 
-# Configuración adicional para WhiteNoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Configuración adicional para WhiteNoise ya está arriba en STATICFILES_STORAGE
 
 # Configuraciones de seguridad para producción
 if not DEBUG:
