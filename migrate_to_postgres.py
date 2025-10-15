@@ -66,6 +66,8 @@ def load_data_to_postgres():
     Cargar datos a PostgreSQL
     """
     print("🔄 Cargando datos a PostgreSQL...")
+    # Depuración: mostrar valor de DATABASE_URL
+    print("DEBUG: DATABASE_URL=", os.environ.get("DATABASE_URL", "<NO DEFINIDA>"))
     
     # Cambiar a settings de PostgreSQL
     os.environ['DJANGO_SETTINGS_MODULE'] = 'cardiaco_vaca.settings_postgres'
@@ -75,14 +77,18 @@ def load_data_to_postgres():
         # Ejecutar migraciones
         print("📦 Ejecutando migraciones...")
         call_command('migrate')
-        
-        # Cargar datos
-        print("📥 Cargando datos...")
-        call_command('loaddata', 'sqlite_data_backup.json')
-        
+
+        # Cargar datos desde el archivo JSON explícitamente
+        fixture_path = 'sqlite_data_backup.json'
+        if not os.path.exists(fixture_path):
+            print(f"❌ El archivo de backup '{fixture_path}' no se encuentra en el directorio actual: {os.getcwd()}")
+            return False
+        print(f"📥 Cargando datos desde '{fixture_path}'...")
+        call_command('loaddata', fixture_path)
+
         print("✅ Migración completada exitosamente!")
         return True
-        
+
     except Exception as e:
         print(f"❌ Error durante la migración: {e}")
         return False

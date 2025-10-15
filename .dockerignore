@@ -1,0 +1,79 @@
+# Git y control de versiones
+.git/
+.gitignore
+.github/
+
+# Archivos de configuración de Fly.io
+fly.toml
+
+# Bases de datos
+*.sqlite3
+db.sqlite3
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django
+*.log
+local_settings.py
+staticfiles/
+media/
+
+# Backups y archivos temporales
+backups/
+*.bak
+temp_car_data.json
+all_data.json
+render_migration_data.json
+
+# Scripts de deployment
+*.ps1
+*.sh
+deploy_*.ps1
+azure_*.ps1
+
+# Documentación
+*.md
+!README.md
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node modules (para Chart.js)
+node_modules/
+staticfiles/Chart.js-4.4.0/node_modules/
+temp_car/static/Chart.js-4.4.0/node_modules/
+
+# Archivos de desarrollo de Chart.js
+staticfiles/Chart.js-4.4.0/
+temp_car/static/Chart.js-4.4.0/docs/
+temp_car/static/Chart.js-4.4.0/test/
+temp_car/static/Chart.js-4.4.0/scripts/
+temp_car/static/Chart.js-4.4.0/helpers/
+temp_car/static/Chart.js-4.4.0/auto/
+temp_car/static/Chart.js-4.4.0/src/
+
+# Variables de entorno
+.env
+.env.local
+*.env
+
+# Archivos de cache
+.cache/
+*.cache

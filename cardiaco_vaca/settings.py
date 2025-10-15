@@ -34,6 +34,8 @@ ALLOWED_HOSTS = [
     'pmonitunl.vercel.app',
     'controlbovinovfinal-production.up.railway.app',
     '.herokuapp.com',  # Permite todos los subdominios de Heroku
+    'control-bovino-vfinal.fly.dev',  # Fly.io
+    '.fly.dev',  # Permite todos los subdominios de Fly.io
 ] + os.environ.get('ALLOWED_HOSTS', '').split(',')
 LOGIN_REDIRECT_URL = ('dashboard_redirect')
 LOGOUT_REDIRECT_URL = ('login')
@@ -74,7 +76,9 @@ CSRF_TRUSTED_ORIGINS = [
     'https://pmonitunl.vercel.app',
     "https://controlbovinovfinal-production.up.railway.app",
     "https://*.onrender.com",
-    "https://*.herokuapp.com"
+    "https://*.herokuapp.com",
+    "https://control-bovino-vfinal.fly.dev",  # Fly.io
+    "https://*.fly.dev"  # Permite todos los subdominios de Fly.io
 ]
 
 #AUTH_USER_MODEL = 'temp_car.CustomUser'

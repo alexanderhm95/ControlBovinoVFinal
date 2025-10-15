@@ -1,62 +1,50 @@
-name: Backup SQLite Database
+
+name: Backup PostgreSQL Database (Fly.io)
 
 on:
   schedule:
-    # Ejecutar diariamente a las 2:00 AM UTC (ajusta según tu zona horaria)
+    # Ejecutar diariamente a las 2:00 AM UTC
     - cron: '0 2 * * *'
-  workflow_dispatch: # Permite ejecutar manualmente
+  workflow_dispatch:
 
 jobs:
   backup-database:
     runs-on: ubuntu-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Create database backup
-      run: |
-        # Crear directorio de backups si no existe
-        mkdir -p backups
-        
-        # Generar timestamp para el backup
-        TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-        
-        # Crear backup de la base de datos
-        if [ -f "db.sqlite3" ]; then
-          cp db.sqlite3 "backups/db_backup_${TIMESTAMP}.sqlite3"
-          echo "Backup creado: db_backup_${TIMESTAMP}.sqlite3"
-        else
-          echo "No se encontró db.sqlite3"
-        fi
-        
-        # Mantener solo los últimos 30 backups (30 días)
-        cd backups
-        ls -t db_backup_*.sqlite3 | tail -n +31 | xargs -r rm
-        cd ..
-    
-    - name: Commit and push backup
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add backups/
-        
-        if git diff --staged --quiet; then
-          echo "No hay cambios en la base de datos"
-        else
-          git commit -m "Backup automático de base de datos - $(date +%Y-%m-%d)"
-          git push
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create database backup (pg_dump)
+        env:
+          PGUSER: ${{ secrets.PGUSER }}
+          PGPASSWORD: ${{ secrets.PGPASSWORD }}
+          PGHOST: ${{ secrets.PGHOST }}
+          PGPORT: ${{ secrets.PGPORT }}
+          PGDATABASE: ${{ secrets.PGDATABASE }}
+        run: |
+          mkdir -p backups
+          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+          pg_dump --no-owner --no-privileges -h "$PGHOST" -U "$PGUSER" -p "$PGPORT" -d "$PGDATABASE" > "backups/db_backup_${TIMESTAMP}.sql"
+          echo "Backup creado: backups/db_backup_${TIMESTAMP}.sql"
+          # Mantener solo los últimos 30 backups
+          cd backups
+          ls -t db_backup_*.sql | tail -n +31 | xargs -r rm
+          cd ..
+
+      - name: Commit and push backup
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add backups/
+          if git diff --staged --quiet; then
+            echo "No hay cambios en la base de datos"
+          else
+            git commit -m "Backup automático de base de datos PostgreSQL - $(date +%Y-%m-%d)"
+            git push
         fi
