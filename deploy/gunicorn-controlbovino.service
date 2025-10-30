@@ -1,0 +1,20 @@
+[Unit]
+Description=gunicorn daemon for ControlBovinoVFinal
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/www-data/ControlBovinoVFinal
+# Ruta al archivo .env que contendrá SECRET_KEY, DEBUG, DATABASE_URL, etc.
+EnvironmentFile=/home/www-data/ControlBovinoVFinal/deploy/.env
+# Ajusta la ruta al binario de gunicorn dentro del venv
+ExecStart=/home/www-data/ControlBovinoVFinal/venv/bin/gunicorn \
+  --access-logfile - \
+  --error-logfile - \
+  --workers 3 \
+  --bind unix:/run/gunicorn-controlbovino.sock \
+  cardiaco_vaca.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
