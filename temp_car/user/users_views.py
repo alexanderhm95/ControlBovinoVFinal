@@ -103,7 +103,34 @@ def crear_usuario(request):
                 
                 # Guardar información personal
                 form.save()
-                
+
+                # Enviar correo de bienvenida con enlace para establecer contraseña
+                try:
+                    subject = 'Bienvenido a Control Bovino'
+                    email_template_name = 'appMonitor/user/new_user_email.txt'
+                    context = {
+                        'email': user.email,
+                        'domain': request.META.get('HTTP_HOST', 'localhost'),
+                        'site_name': 'Control y Monitoreo de Constantes Fisiológicas UNL',
+                        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                        'user': user,
+                        'token': default_token_generator.make_token(user),
+                        'protocol': 'https' if request.is_secure() else 'http',
+                    }
+
+                    email_content = render_to_string(email_template_name, context)
+
+                    send_mail(
+                        subject=subject,
+                        message=email_content,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False
+                    )
+                except Exception as e:
+                    # No detener el flujo por un fallo en el correo; notificar al admin/usuario
+                    messages.warning(request, f'Usuario creado pero no se pudo enviar correo: {str(e)}')
+
                 messages.success(request, 'Usuario creado exitosamente. Puede iniciar sesión.')
                 return redirect('/')
                 

@@ -1,0 +1,14 @@
+Asunto: Bienvenido a Control Bovino
+
+Hola {{ user.first_name }},
+
+Se ha creado una cuenta para el correo {{ email }} en el sistema "{{ site_name }}".
+
+Para establecer su contraseña de forma segura, por favor haga clic en el siguiente enlace:
+
+{{ protocol }}://{{ domain }}{% url 'passwordResetConfirm' uidb64=uid token=token %}
+
+Si no solicitó la creación de esta cuenta, ignore este correo o contacte con el administrador.
+
+Saludos,
+Equipo de soporte - Control Bovino
