@@ -1,6 +1,6 @@
-Guía de despliegue en Ubuntu (Puerto 8081)
+Guía de despliegue en Ubuntu (IP 190.96.102.30, puerto 8081)
 
-Resumen: esta guía asume que desplegarás la app en /home/www-data/ControlBovinoVFinal con un virtualenv en /home/www-data/ControlBovinoVFinal/venv. Nginx escuchará en el puerto 8081 y hará proxy al socket de gunicorn.
+Resumen: esta guía asume que desplegarás la app en /home/www-data/ControlBovinoVFinal con un virtualenv en /home/www-data/ControlBovinoVFinal/venv. Nginx escuchará en 190.96.102.30:8081 y hará proxy al socket de gunicorn.
 
 Pasos (comandos a ejecutar en el servidor Ubuntu):
 
@@ -54,7 +54,8 @@ sudo systemctl restart nginx
 
 8) Firewall
 
-sudo ufw allow 8081/tcp
+# Permitir tráfico TCP al puerto 8081 en la IP pública indicada
+sudo ufw allow from any to 190.96.102.30 port 8081 proto tcp
 sudo ufw enable
 sudo ufw status
 
@@ -70,5 +71,13 @@ sudo tail -n 200 /var/log/nginx/controlbovino.error.log
 - Considera obtener certificados TLS (Let's Encrypt) y usar Nginx en 443; para portar 8081 detrás de TLS puedes usar port 443 y proxy pasar igual.
 - Asegúrate de poner DEBUG=False y un SECRET_KEY robusto en deploy/.env.
 - Revisa permisos de /home/www-data/ControlBovinoVFinal/staticfiles y media.
+
+Nota sobre socket y systemd
+--------------------------------
+En la configuración actual el servicio systemd crea un RuntimeDirectory llamado `gunicorn-controlbovino` en `/run/` y el socket de Gunicorn se encuentra en:
+
+    /run/gunicorn-controlbovino/gunicorn-controlbovino.sock
+
+Esto evita problemas de permisos al crear el socket desde systemd y mantiene los artefactos en runtime. Si arrancas Gunicorn manualmente con `deploy/start_gunicorn.sh`, el script ya está adaptado para usar esta ruta de socket.
 
 Si quieres, puedo generar los comandos exactos adaptados a tu servidor (usuario, dominio o IP) y opcionalmente preparar el archivo de systemd listo para copiar al servidor.
