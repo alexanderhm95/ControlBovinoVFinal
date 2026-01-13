@@ -3,6 +3,7 @@ from django.conf import settings
 from . import views
 from temp_car.views import *
 from temp_car.user.users_views import *
+from temp_car.logs_views import *
 #from turisticos.agenda.views import 
 from django.contrib.auth import views as auth_views
 from django.urls import path
@@ -62,6 +63,16 @@ urlpatterns = [
     #Ruta para el Arduino 
     ######################################
     path('api/arduino/monitoreo', views.lecturaDatosArduino, name='recibir_datos2'),
+    ######################################
+
+    ######################################
+    # RUTAS PARA VISUALIZACIÓN DE LOGS
+    ######################################
+    path('admin/logs/', view_logs_dashboard, name='view_logs'),
+    path('admin/logs/file/<str:filename>/', get_log_content, name='get_log_content'),
+    path('admin/logs/download/<str:filename>/', get_log_file, name='download_log'),
+    path('admin/logs/clear/<str:filename>/', clear_log_file, name='clear_log'),
+    path('admin/logs/stats/', logs_api_stats, name='logs_stats'),
     ######################################
 
 ]
