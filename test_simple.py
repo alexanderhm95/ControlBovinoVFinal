@@ -42,8 +42,8 @@ def test_register():
     data = {
         "username": f"testuser_{ts}",
         "email": f"test_{ts}@example.com",
-        "cedula": "1234567890",
-        "telefono": "0999999999",
+        "cedula": f"123456{ts}",  # Cédula única usando timestamp
+        "telefono": f"099999{ts % 10000}",  # Teléfono único
         "nombre": "Test",
         "apellido": "User"
     }
@@ -61,12 +61,18 @@ def test_register():
         print(f"Error: {str(e)}")
         return False
 
-def test_reporte():
+def test_reporte(new_username=None):
     """Test Mobile Reporte API"""
     print("\n[TEST] Mobile Reporte API")
+    # El API requiere sensor (collar_id) y username
+    # Usaremos collar_id=1 que sabemos existe
+    ts = int(time.time())
+    # Usar el usuario recién registrado
+    username_to_use = new_username if new_username else f"testuser_{ts}"
+    
     data = {
-        "sensor": 1,
-        "username": "test",
+        "sensor": 1,  # Collar ID que sabemos existe (Sofia)
+        "username": username_to_use,  # Usuario para registrar el control
         "temperatura": 38.5,
         "pulsaciones": 70
     }
@@ -78,6 +84,7 @@ def test_reporte():
             timeout=5
         )
         print(f"Status: {response.status_code}")
+        print(f"Response Text: {response.text if response.text else '(empty)'}")
         print(f"Response: {response.json()}")
         return response.status_code in [200, 404, 400]  # 404 si no existe usuario
     except Exception as e:
@@ -109,10 +116,37 @@ if __name__ == "__main__":
     print(f"URL: {BASE_URL}")
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
+    # Primero creamos un usuario
+    print("\n[SETUP] Creando usuario para pruebas...")
+    ts = int(time.time())
+    data = {
+        "username": f"testuser_{ts}",
+        "email": f"test_{ts}@example.com",
+        "cedula": f"123456{ts}",
+        "telefono": f"099999{ts % 10000}",
+        "nombre": "Test",
+        "apellido": "User"
+    }
+    
+    try:
+        response = requests.post(
+            f"{BASE_URL}/api/register",
+            json=data,
+            timeout=5
+        )
+        if response.status_code == 201:
+            new_username = data['username']
+            print(f"Usuario creado: {new_username}")
+        else:
+            new_username = None
+            print(f"Error creando usuario: {response.status_code}")
+    except:
+        new_username = None
+    
     results = {
         "Arduino": test_arduino(),
         "Register": test_register(),
-        "Reporte": test_reporte(),
+        "Reporte": test_reporte(new_username),
         "List": test_list_users()
     }
     
