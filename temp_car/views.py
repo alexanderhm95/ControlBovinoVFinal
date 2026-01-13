@@ -591,7 +591,7 @@ def reporte_por_id(request):
             'detalle': str(e)
         }, status=500)
 
-
+@csrf_exempt
 def apiRegister(request):
     """
     API endpoint para registro de usuarios desde app móvil
@@ -666,8 +666,8 @@ def apiList(request):
         JsonResponse con diccionario de usuarios
     """
     try:
-        # Obtener solo usuarios no-staff usando select_related para optimizar
-        usuarios_list = User.objects.filter(is_staff=False).prefetch_related('personalinfo_set')
+        # Obtener solo usuarios no-staff
+        usuarios_list = User.objects.filter(is_staff=False)
         
         if not usuarios_list.exists():
             return JsonResponse({
@@ -705,6 +705,7 @@ def apiList(request):
             'detalle': str(e)
         }, status=500)
 
+@csrf_exempt
 def apiEdit(request, user_id):
     """
     API endpoint para editar usuario desde app móvil

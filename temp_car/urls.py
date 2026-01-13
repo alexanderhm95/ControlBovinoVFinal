@@ -54,7 +54,7 @@ urlpatterns = [
     #path('api/movil/monitoreo/', views.obtener_datos_json3, name='datos3'),          # Api para obtener datos de los collares
     path('api/register',apiRegister, name='registrar2'),                            #Desarrollado para pruebas
     path('api/listar',apiList, name='listar2'),                                     #Desarrollado para pruebas
-    path('api/editar',apiEdit, name='listar2'),                                     #Desarrollado para pruebas
+    path('api/editar/<int:user_id>/',apiEdit, name='editar_usuario'),              #Desarrollado para pruebas
     #############################################################
     
 
