@@ -503,9 +503,17 @@ def reporte_por_id(request):
             'detalle': 'Use POST para esta solicitud'
         }, status=405)
     
-    # Obtener parámetros
-    collar_id = request.POST.get('sensor')
-    username = request.POST.get('username')
+    # Obtener parámetros de JSON (no POST form)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'error': 'JSON inválido',
+            'detalle': 'El body debe ser JSON válido'
+        }, status=400)
+    
+    collar_id = data.get('sensor')
+    username = data.get('username')
     
     # Validar parámetros requeridos
     if not collar_id or not username:
@@ -609,51 +617,66 @@ def apiRegister(request):
             'detalle': 'Use POST para registrar usuarios'
         }, status=405)
     
-    form = PersonalInfoForm(request.POST)
-    
-    if form.is_valid():
-        try:
-            # Verificar si ya existe un usuario con ese email
-            if User.objects.filter(email=form.cleaned_data['email']).exists():
-                return JsonResponse({
-                    'error': 'Email ya registrado',
-                    'detalle': 'Ya existe un usuario con este email'
-                }, status=400)
-            
-            # Crear usuario con el modelo CustomUserManager
-            user = get_user_model().objects.create_user(
-                username=form.cleaned_data['email'],
-                email=form.cleaned_data['email'],
-                password=form.cleaned_data['cedula'],
-                first_name=form.cleaned_data['nombre'],
-                last_name=form.cleaned_data['apellido']
-            )
-            user.save()
-            
-            # Guardar información personal
-            form.save()
-            
-            return JsonResponse({
-                'message': 'Usuario creado exitosamente',
-                'data': {
-                    'email': user.email,
-                    'nombre': user.first_name,
-                    'apellido': user.last_name
-                }
-            }, status=201)
-            
-        except Exception as e:
-            return JsonResponse({
-                'error': 'Error al crear usuario',
-                'detalle': str(e)
-            }, status=500)
-    else:
-        # Retornar errores del formulario
-        errors = {field: error[0] for field, error in form.errors.items()}
+    # Obtener datos de JSON (no form data)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
         return JsonResponse({
-            'error': 'Datos de formulario inválidos',
-            'errores': errors
+            'error': 'JSON inválido',
+            'detalle': 'El body debe ser JSON válido'
         }, status=400)
+    
+    # Validar campos requeridos
+    required_fields = ['username', 'email', 'cedula', 'telefono', 'nombre', 'apellido']
+    missing_fields = [field for field in required_fields if not data.get(field)]
+    
+    if missing_fields:
+        return JsonResponse({
+            'error': 'Campos requeridos incompletos',
+            'detalle': f'Se requieren: {", ".join(missing_fields)}'
+        }, status=400)
+    
+    try:
+        # Verificar si ya existe un usuario con ese email
+        if User.objects.filter(email=data['email']).exists():
+            return JsonResponse({
+                'error': 'Email ya registrado',
+                'detalle': 'Ya existe un usuario con este email'
+            }, status=400)
+        
+        # Crear usuario de Django
+        user = get_user_model().objects.create_user(
+            username=data['username'],
+            email=data['email'],
+            password=data.get('password', data['cedula']),  # Usar contraseña o cédula por defecto
+            first_name=data['nombre'],
+            last_name=data['apellido']
+        )
+        
+        # Crear perfil PersonalInfo
+        PersonalInfo.objects.create(
+            email=data['email'],
+            cedula=data['cedula'],
+            telefono=data['telefono'],
+            nombre=data['nombre'],
+            apellido=data['apellido']
+        )
+        
+        return JsonResponse({
+            'message': 'Usuario creado exitosamente',
+            'data': {
+                'username': user.username,
+                'email': user.email,
+                'nombre': user.first_name,
+                'apellido': user.last_name
+            }
+        }, status=201)
+        
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Error al crear usuario',
+            'detalle': str(e)
+        }, status=500)
 
 def apiList(request):
     """
@@ -817,6 +840,16 @@ def lecturaDatosArduino(request):
                 'error': 'Datos incompletos',
                 'detalle': 'Se requieren collar_id, nombre_vaca, mac_collar y temperatura',
                 'recibido': lecturaDecoded
+            }, status=400)
+        
+        # Convertir collar_id a entero (es un campo numérico en BD)
+        try:
+            collar_id = int(collar_id)
+        except (ValueError, TypeError):
+            return JsonResponse({
+                'error': 'collar_id inválido',
+                'detalle': 'collar_id debe ser un número entero',
+                'recibido': collar_id
             }, status=400)
 
         # Verificar o crear bovino
