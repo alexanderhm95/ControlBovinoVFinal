@@ -49,8 +49,9 @@ def test_arduino():
     """Test Arduino API - POST /api/arduino/monitoreo"""
     print("\n[TEST] Arduino API (Remote)")
     ts = int(time.time())
+    collar_id = 5555 + (ts % 1000)
     data = {
-        "collar_id": 5555 + (ts % 1000),
+        "collar_id": collar_id,
         "nombre_vaca": "Test Arduino",
         "mac_collar": f"AA:BB:CC:DD:EE:{ts % 100:02d}",
         "temperatura": 38.5,
@@ -67,25 +68,26 @@ def test_arduino():
         if response.status_code == 201:
             result = response.json()
             print(f"✓ PASS - Lectura registrada")
-            return "PASS"
+            return "PASS", collar_id  # Devolver el collar_id creado
         else:
             print(f"✗ FAIL - {response.status_code}")
             print(f"Response: {response.text[:200]}")
-            return "FAIL"
+            return "FAIL", None
     except Exception as e:
         print(f"✗ ERROR - {str(e)}")
-        return "ERROR"
+        return "ERROR", None
 
-def test_reporte(username):
+def test_reporte(username, collar_id=None):
     """Test Mobile Reporte API - POST /api/movil/datos/"""
     print("\n[TEST] Mobile Reporte API (Remote)")
     
     # Usar siempre un usuario que sabemos existe en el servidor
-    # El usuario recién creado no tiene datos aún
-    username = "admin"
+    username = username or "admin"
+    # Usar el collar que acaba de crear Arduino, o collar 1 por defecto
+    sensor = collar_id or 1
     
     data = {
-        "sensor": 1,  # Collar que sabemos existe
+        "sensor": sensor,
         "username": username
     }
     
@@ -140,16 +142,31 @@ if __name__ == "__main__":
     
     results = {}
     
-    # Test 1: Register (crea un usuario que usaremos después)
+    # Test 1: List (obtener usuario existente)
+    print("\n[SETUP] Obteniendo usuario existente del servidor...")
+    existing_username = None
+    try:
+        response = requests.get(f"{BASE_URL}/api/listar", timeout=TIMEOUT)
+        if response.status_code == 200:
+            users = response.json().get('usuarios', [])
+            if users:
+                existing_username = users[0]['username']
+                print(f"Usuario encontrado: {existing_username}")
+    except:
+        pass
+    
+    # Test 2: Register (crea un usuario que usaremos después)
     new_username, results['Register'] = test_register()
     
-    # Test 2: Arduino
-    results['Arduino'] = test_arduino()
+    # Test 3: Arduino
+    arduino_status, collar_id = test_arduino()
+    results['Arduino'] = arduino_status
     
-    # Test 3: Reporte (usa el usuario creado)
-    results['Reporte'] = test_reporte(new_username)
+    # Test 4: Reporte (usa usuario existente del servidor Y collar_id creado)
+    username_to_test = existing_username or new_username or "admin"
+    results['Reporte'] = test_reporte(username_to_test, collar_id)
     
-    # Test 4: List
+    # Test 5: List
     results['List'] = test_list()
     
     # Resumen
