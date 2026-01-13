@@ -1,0 +1,12 @@
+{
+  "framework": "django",
+  "python": {
+    "version": "3.11"
+  },
+  "buildCommand": "pip install -r requirements.txt && python manage.py collectstatic --noinput",
+  "env": {
+    "PYTHONUNBUFFERED": "1",
+    "DEBUG": "False",
+    "ALLOWED_HOSTS": ".vercel.app"
+  }
+}
