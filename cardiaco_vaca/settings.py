@@ -248,7 +248,145 @@ SITE_ID = 1  # Reemplaza 1 con el ID de tu sitio
 DEFAULT_FROM_EMAIL = 'vacauniversidad@gmail.com'  # Reemplaza con tu dirección de correo
 
 # Configuración adicional para WhiteNoise ya está arriba en STATICFILES_STORAGE
+# ==========================================
+# CONFIGURACIÓN DE LOGGING
+# ==========================================
 
+LOGS_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOGS_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} | {name} | {funcName}:{lineno} | {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'simple': {
+            'format': '[{levelname}] {asctime} | {message}',
+            'style': '{',
+            'datefmt': '%H:%M:%S',
+        },
+        'api_format': {
+            'format': '[API] {asctime} | {name} | {levelname} | {message}',
+            'style': '{',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'handlers': {
+        # Consola (desarrollo)
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        # Archivo de aplicación general
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'django.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        # Archivo específico para APIs
+        'api_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'apis.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'api_format',
+        },
+        # Archivo para errores
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'errors.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        # Archivo para base de datos
+        'db_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'database.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        # Archivo para requests HTTP
+        'request_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGS_DIR, 'requests.log'),
+            'maxBytes': 1024 * 1024 * 10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        # Logger raíz
+        'django': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        # Logger para las aplicaciones personalizadas
+        'temp_car': {
+            'handlers': ['console', 'file', 'api_file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Logger para vistas
+        'temp_car.views': {
+            'handlers': ['console', 'api_file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Logger para modelos
+        'temp_car.models': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Logger para formularios
+        'temp_car.forms': {
+            'handlers': ['console', 'file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Logger para base de datos
+        'django.db.backends': {
+            'handlers': ['console', 'db_file'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        # Logger para requests
+        'django.request': {
+            'handlers': ['console', 'request_file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        # Logger para seguridad
+        'django.security': {
+            'handlers': ['console', 'error_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
 # Configuraciones de seguridad para producción
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
