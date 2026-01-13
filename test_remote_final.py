@@ -80,8 +80,9 @@ def test_reporte(username):
     """Test Mobile Reporte API - POST /api/movil/datos/"""
     print("\n[TEST] Mobile Reporte API (Remote)")
     
-    if not username:
-        username = "admin"  # Usuario por defecto
+    # Usar siempre un usuario que sabemos existe en el servidor
+    # El usuario recién creado no tiene datos aún
+    username = "admin"
     
     data = {
         "sensor": 1,  # Collar que sabemos existe
