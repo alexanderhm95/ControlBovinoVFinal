@@ -51,9 +51,10 @@ def test_arduino():
     ts = int(time.time())
     data = {
         "collar_id": 5555 + (ts % 1000),
+        "nombre_vaca": "Test Arduino",
+        "mac_collar": f"AA:BB:CC:DD:EE:{ts % 100:02d}",
         "temperatura": 38.5,
-        "pulsaciones": 70,
-        "nombre_vaca": "Test Arduino"
+        "pulsaciones": 70
     }
     
     try:
