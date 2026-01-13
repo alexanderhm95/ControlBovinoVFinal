@@ -505,11 +505,22 @@ def reporte_por_id(request):
     
     # Obtener parámetros de JSON (no POST form)
     try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
+        body = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
+        if not body:
+            return JsonResponse({
+                'error': 'Body vacío',
+                'detalle': 'El body no puede estar vacío'
+            }, status=400)
+        data = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         return JsonResponse({
             'error': 'JSON inválido',
-            'detalle': 'El body debe ser JSON válido'
+            'detalle': f'El body debe ser JSON válido: {str(e)}'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Error al procesar solicitud',
+            'detalle': str(e)
         }, status=400)
     
     collar_id = data.get('sensor')
@@ -619,11 +630,22 @@ def apiRegister(request):
     
     # Obtener datos de JSON (no form data)
     try:
-        data = json.loads(request.body)
-    except json.JSONDecodeError:
+        body = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
+        if not body:
+            return JsonResponse({
+                'error': 'Body vacío',
+                'detalle': 'El body no puede estar vacío'
+            }, status=400)
+        data = json.loads(body)
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
         return JsonResponse({
             'error': 'JSON inválido',
-            'detalle': 'El body debe ser JSON válido'
+            'detalle': f'El body debe ser JSON válido: {str(e)}'
+        }, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Error al procesar solicitud',
+            'detalle': str(e)
         }, status=400)
     
     # Validar campos requeridos
@@ -823,8 +845,14 @@ def lecturaDatosArduino(request):
     
     try:
         # Decodificar JSON del body
-        body_unicode = request.body.decode('utf-8')
-        lecturaDecoded = json.loads(body_unicode)
+        body_text = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
+        if not body_text:
+            return JsonResponse({
+                'error': 'Body vacío',
+                'detalle': 'El body no puede estar vacío'
+            }, status=400)
+        
+        lecturaDecoded = json.loads(body_text)
         
         # Extraer datos del JSON
         collar_id = lecturaDecoded.get('collar_id')
@@ -845,10 +873,10 @@ def lecturaDatosArduino(request):
         # Convertir collar_id a entero (es un campo numérico en BD)
         try:
             collar_id = int(collar_id)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as e:
             return JsonResponse({
                 'error': 'collar_id inválido',
-                'detalle': 'collar_id debe ser un número entero',
+                'detalle': f'collar_id debe ser un número entero: {str(e)}',
                 'recibido': collar_id
             }, status=400)
 
