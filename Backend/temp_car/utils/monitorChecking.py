@@ -4,11 +4,13 @@ from temp_car.models import ControlMonitoreo
 fecha_actual = datetime.now().date()
 hora_actual = time(10, 0)
 
-# Calcular los rangos de tiempo para la mañana y la tarde
+# Calcular los rangos de tiempo para mañana, tarde y noche
 startMorning = datetime.combine(fecha_actual, time(hour=7, minute=0))
 endMorning = datetime.combine(fecha_actual, time(hour=12, minute=0))
-startAfternoon = datetime.combine(fecha_actual, time(hour=13, minute=0))
+startAfternoon = datetime.combine(fecha_actual, time(hour=12, minute=0))
 endAfternoon = datetime.combine(fecha_actual, time(hour=18, minute=0))
+startNight = datetime.combine(fecha_actual, time(hour=18, minute=0))
+endNight = datetime.combine(fecha_actual, time(hour=23, minute=59))
 
 def checkingMorning(idBovino):
     controlesMorning = ControlMonitoreo.objects.filter(
@@ -26,11 +28,35 @@ def checkingAfternoon(idBovino):
     ).count()
     return controlesAfternoon == 0
 
+def checkingNight(idBovino):
+    """Verifica si ya hay registro de noche para hoy"""
+    controlesNight = ControlMonitoreo.objects.filter(
+        id_Lectura__id_Bovino=idBovino,
+        fecha_lectura=fecha_actual,
+        hora_lectura__range=(startNight.time(), endNight.time())
+    ).count()
+    return controlesNight == 0
+
 def checkHoursMorning(timeNow):
     return startMorning.time() <= timeNow <= endMorning.time()
 
 def checkHoursAfternoon(timeNow):
     return startAfternoon.time() <= timeNow <= endAfternoon.time()
 
+def checkHoursNight(timeNow):
+    """Verifica si la hora está en rango de noche"""
+    return startNight.time() <= timeNow <= endNight.time()
+
 def checkDate(dateNow):
     return dateNow == fecha_actual
+
+def getTurno(timeNow):
+    """Retorna el nombre del turno basado en la hora"""
+    if startMorning.time() <= timeNow <= endMorning.time():
+        return "mañana"
+    elif startAfternoon.time() <= timeNow <= endAfternoon.time():
+        return "tarde"
+    elif startNight.time() <= timeNow <= endNight.time():
+        return "noche"
+    else:
+        return "fuera de horario"

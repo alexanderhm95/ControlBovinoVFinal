@@ -42,8 +42,10 @@ from .models import (
 from .utils.monitorChecking import (
     checkingMorning,
     checkingAfternoon,
+    checkingNight,
     checkHoursMorning,
     checkHoursAfternoon,
+    checkHoursNight,
     checkDate
 )
 
@@ -343,6 +345,7 @@ def temperatura(request):
     """
     Vista de monitoreo de temperatura corporal
     Muestra historial de temperaturas con gráficos y análisis
+    SOLO DATOS DE APP MÓVIL (excluye Arduino)
     
     Args:
         request: HttpRequest con parámetro page opcional
@@ -353,9 +356,10 @@ def temperatura(request):
     try:
         page = request.GET.get('page', 1)
         
-        # Optimizar consulta con select_related
+        # Optimizar consulta con select_related y filtrar solo app móvil
         reportes_list = (
             Lectura.objects
+            .filter(fuente='app_movil')  # Solo datos de app móvil
             .select_related('id_Bovino', 'id_Temperatura', 'id_Pulsaciones')
             .order_by('-fecha_lectura', '-hora_lectura')
         )
@@ -385,6 +389,7 @@ def frecuencia(request):
     """
     Vista de monitoreo de frecuencia cardíaca (pulsaciones)
     Muestra historial de pulsaciones con gráficos y análisis
+    SOLO DATOS DE APP MÓVIL (excluye Arduino)
     
     Args:
         request: HttpRequest con parámetro page opcional
@@ -395,9 +400,10 @@ def frecuencia(request):
     try:
         page = request.GET.get('page', 1)
         
-        # Optimizar consulta con select_related
+        # Optimizar consulta con select_related y filtrar solo app móvil
         reportes_list = (
             Lectura.objects
+            .filter(fuente='app_movil')  # Solo datos de app móvil
             .select_related('id_Bovino', 'id_Temperatura', 'id_Pulsaciones')
             .order_by('-fecha_lectura', '-hora_lectura')
         )
@@ -433,58 +439,71 @@ class LoginView1(APIView):
     """
     API endpoint para autenticación de usuarios desde app móvil
     
-    POST /api/login/
+    POST /api/movil/login/
     Body: {"username": "email@example.com", "password": "password"}
     """
     
     @csrf_exempt
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        
-        # Validar que se proporcionaron credenciales
-        if not username or not password:
-            return Response({
-                'detalle': 'Credenciales incompletas',
-                'error': 'Se requieren username y password'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Autenticar usuario
-        user = authenticate(request, username=username, password=password)
-        
-        if user is not None:
-            # Obtener información personal
-            try:
-                personaInfo = PersonalInfo.objects.get(email=username)
-                
-                # Extraer primer nombre y apellido
-                primer_nombre = personaInfo.nombre.split(' ')[0] if personaInfo.nombre else ''
-                primer_apellido = personaInfo.apellido.split(' ')[0] if personaInfo.apellido else ''
-                
-                login(request, user)
-                
-                body = {
-                    'username': username,
-                    'Nombres': f'{primer_nombre} {primer_apellido}'.strip(),
-                    'nombre_completo': personaInfo.nombre_completo,
-                    'is_staff': user.is_staff,
-                }
-                
+        try:
+            # Intentar obtener datos de JSON primero, luego de POST
+            if request.content_type == 'application/json':
+                import json
+                body = json.loads(request.body)
+                username = body.get('username')
+                password = body.get('password')
+            else:
+                username = request.POST.get('username') or request.data.get('username')
+                password = request.POST.get('password') or request.data.get('password')
+            
+            # Validar que se proporcionaron credenciales
+            if not username or not password:
                 return Response({
-                    'detalle': 'Inicio de sesión exitoso',
-                    'data': body
-                }, status=status.HTTP_200_OK)
-                
-            except PersonalInfo.DoesNotExist:
+                    'detalle': 'Credenciales incompletas',
+                    'error': 'Se requieren username y password'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Autenticar usuario
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                # Obtener información personal
+                try:
+                    personaInfo = PersonalInfo.objects.get(email=username)
+                    
+                    # Extraer primer nombre y apellido
+                    primer_nombre = personaInfo.nombre.split(' ')[0] if personaInfo.nombre else ''
+                    primer_apellido = personaInfo.apellido.split(' ')[0] if personaInfo.apellido else ''
+                    
+                    login(request, user)
+                    
+                    body = {
+                        'username': username,
+                        'Nombres': f'{primer_nombre} {primer_apellido}'.strip(),
+                        'nombre_completo': personaInfo.nombre_completo,
+                        'is_staff': user.is_staff,
+                    }
+                    
+                    return Response({
+                        'detalle': 'Inicio de sesión exitoso',
+                        'data': body
+                    }, status=status.HTTP_200_OK)
+                    
+                except PersonalInfo.DoesNotExist:
+                    return Response({
+                        'detalle': 'Usuario sin información personal',
+                        'error': 'El usuario no tiene perfil asociado'
+                    }, status=status.HTTP_404_NOT_FOUND)
+            else:
                 return Response({
-                    'detalle': 'Usuario sin información personal',
-                    'error': 'El usuario no tiene perfil asociado'
-                }, status=status.HTTP_404_NOT_FOUND)
-        else:
+                    'detalle': 'Credenciales inválidas',
+                    'error': 'Usuario o contraseña incorrectos'
+                }, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
             return Response({
-                'detalle': 'Credenciales inválidas',
-                'error': 'Usuario o contraseña incorrectos'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+                'detalle': 'Error en el servidor',
+                'error': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @csrf_exempt
 def reporte_por_id(request):
@@ -591,37 +610,65 @@ def reporte_por_id(request):
 
         print(f"[MÓVIL] ✓ Usuario encontrado: {user.username}")
         
-        # Verificar condiciones para registro de mañana
+        # Verificar condiciones para registro
         print(f"[MÓVIL] Verificando condiciones de registro...")
         print(f"[MÓVIL]   - Última lectura: {dato.fecha_lectura} {dato.hora_lectura}")
         print(f"[MÓVIL]   - Estado de salud: {dato.estado_salud}")
         
-        if (checkingMorning(bovino) and 
-            checkHoursMorning(dato.hora_lectura) and 
-            checkDate(dato.fecha_lectura)):
-            
-            print(f"[MÓVIL] ✓ Condiciones cumplidas para turno MAÑANA")
-            ControlMonitoreo.objects.create(
-                id_Lectura=dato,
-                id_User=user,
-            )
-            registro = True
-            mensaje_registro = 'Registrado en turno de mañana'
+        # Validar que la lectura sea de hoy
+        if not checkDate(dato.fecha_lectura):
+            print(f"[MÓVIL] ⚠️ Lectura no es de hoy")
+            mensaje_registro = 'Lectura no es de hoy'
+        
+        # Verificar turno de mañana (7:00 - 12:00)
+        elif checkHoursMorning(dato.hora_lectura):
+            if checkingMorning(bovino):
+                print(f"[MÓVIL] ✓ Registrando en turno MAÑANA")
+                ControlMonitoreo.objects.create(
+                    id_Lectura=dato,
+                    id_User=user,
+                    fecha_lectura=dato.fecha_lectura,
+                    hora_lectura=dato.hora_lectura
+                )
+                registro = True
+                mensaje_registro = 'Registrado en turno de mañana'
+            else:
+                print(f"[MÓVIL] ⚠️ Ya registrado en turno MAÑANA")
+                mensaje_registro = 'Ya registrado en turno de mañana'
 
-        # Verificar condiciones para registro de tarde
-        elif (checkingAfternoon(bovino) and 
-              checkHoursAfternoon(dato.hora_lectura) and 
-              checkDate(dato.fecha_lectura)):
-            
-            print(f"[MÓVIL] ✓ Condiciones cumplidas para turno TARDE")
-            ControlMonitoreo.objects.create(
-                id_Lectura=dato,
-                id_User=user,
-            )
-            registro = True
-            mensaje_registro = 'Registrado en turno de tarde'
+        # Verificar turno de tarde (12:01 - 18:00)
+        elif checkHoursAfternoon(dato.hora_lectura):
+            if checkingAfternoon(bovino):
+                print(f"[MÓVIL] ✓ Registrando en turno TARDE")
+                ControlMonitoreo.objects.create(
+                    id_Lectura=dato,
+                    id_User=user,
+                    fecha_lectura=dato.fecha_lectura,
+                    hora_lectura=dato.hora_lectura
+                )
+                registro = True
+                mensaje_registro = 'Registrado en turno de tarde'
+            else:
+                print(f"[MÓVIL] ⚠️ Ya registrado en turno TARDE")
+                mensaje_registro = 'Ya registrado en turno de tarde'
+
+        # Verificar turno de noche (18:01 - 23:59)
+        elif checkHoursNight(dato.hora_lectura):
+            if checkingNight(bovino):
+                print(f"[MÓVIL] ✓ Registrando en turno NOCHE")
+                ControlMonitoreo.objects.create(
+                    id_Lectura=dato,
+                    id_User=user,
+                    fecha_lectura=dato.fecha_lectura,
+                    hora_lectura=dato.hora_lectura
+                )
+                registro = True
+                mensaje_registro = 'Registrado en turno de noche'
+            else:
+                print(f"[MÓVIL] ⚠️ Ya registrado en turno NOCHE")
+                mensaje_registro = 'Ya registrado en turno de noche'
         else:
-            print(f"[MÓVIL] ⚠️ No se cumplieron condiciones de registro")
+            print(f"[MÓVIL] ⚠️ Hora fuera de turnos permitidos")
 
         # Construir respuesta usando propiedades del modelo
         reporte = {
@@ -1098,7 +1145,8 @@ def lecturaDatosArduino(request):
             id_Pulsaciones=pulsaciones_obj,
             id_Bovino=bovino,
             fecha_lectura=datetime.now(),
-            hora_lectura=datetime.now().time()
+            hora_lectura=datetime.now().time(),
+            fuente='arduino'  # Marca como proveniente del Arduino
         )
         print(f"[ARDUINO] Lectura creada ID: {lectura.id_Lectura}")
         print(f"[ARDUINO] Estado de salud: {lectura.estado_salud}")

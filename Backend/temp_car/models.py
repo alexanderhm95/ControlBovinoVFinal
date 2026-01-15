@@ -164,6 +164,20 @@ class Lectura(models.Model):
         related_name='lecturas',
         verbose_name='Bovino'
     )
+    fuente = models.CharField(
+        'Fuente de Datos',
+        max_length=20,
+        choices=[
+            ('arduino', 'Arduino/Collar'),
+            ('app_movil', 'App Móvil'),
+            ('manual', 'Manual')
+        ],
+        default='arduino',
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text='Origen de la lectura: Arduino (collar), App Móvil o Manual'
+    )
 
     class Meta:
         verbose_name = 'Lectura'

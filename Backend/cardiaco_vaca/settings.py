@@ -115,7 +115,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'temp_car.middleware.NotFound.NotFoundMiddleware',
+    #'temp_car.middleware.NotFound.NotFoundMiddleware',  # Deshabilitado temporalmente
     'temp_car.middleware.SessionTimeout.SessionTimeoutMiddleware',
 ]
 

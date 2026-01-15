@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 from temp_car.views import error_404_view
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('temp_car.urls')),
+    path('', include('temp_car.urls')),  # Todas las rutas de temp_car se mapean en la raíz
     path('accounts/', include('django.contrib.auth.urls')),
 ]
 
