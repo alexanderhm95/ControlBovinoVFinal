@@ -51,7 +51,8 @@ urlpatterns = [
     #Rutas de Plataforma Movil  
     ######################################
     path('api/movil/login/', LoginView1.as_view(), name='api-login'),                     # Api para el login
-    path('api/movil/datos/', views.reporte_por_id, name='datos3_por_id'),   # Api para obtener datos de los collares
+    path('api/movil/datos/', views.reporte_por_id, name='datos3_por_id'),                # Api POST para registrar monitoreo
+    path('api/movil/datos/<int:collar_id>/', views.obtener_datos_collar, name='datos_collar_get'),  # Api GET para obtener datos por collar ID
     #path('api/movil/monitoreo/', views.obtener_datos_json3, name='datos3'),          # Api para obtener datos de los collares
     path('api/register',apiRegister, name='registrar2'),                            #Desarrollado para pruebas
     path('api/listar',apiList, name='listar2'),                                     #Desarrollado para pruebas

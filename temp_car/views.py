@@ -497,7 +497,14 @@ def reporte_por_id(request):
     Returns:
         JsonResponse con datos del reporte y estado de registro
     """
+    print("\n" + "="*80)
+    print("[MÓVIL] Nueva petición de reporte recibida")
+    print(f"[MÓVIL] Método: {request.method}")
+    print(f"[MÓVIL] Headers: {dict(request.headers)}")
+    print("="*80)
+    
     if request.method != 'POST':
+        print(f"[MÓVIL] ❌ Método {request.method} no permitido")
         return JsonResponse({
             'error': 'Método no permitido',
             'detalle': 'Use POST para esta solicitud'
@@ -506,18 +513,24 @@ def reporte_por_id(request):
     # Obtener parámetros de JSON (no POST form)
     try:
         body = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
+        print(f"[MÓVIL] Body recibido: {body}")
+        
         if not body:
+            print("[MÓVIL] ❌ Body vacío")
             return JsonResponse({
                 'error': 'Body vacío',
                 'detalle': 'El body no puede estar vacío'
             }, status=400)
         data = json.loads(body)
+        print(f"[MÓVIL] JSON parseado: {data}")
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"[MÓVIL] ❌ Error parseando JSON: {str(e)}")
         return JsonResponse({
             'error': 'JSON inválido',
             'detalle': f'El body debe ser JSON válido: {str(e)}'
         }, status=400)
     except Exception as e:
+        print(f"[MÓVIL] ❌ Error general: {str(e)}")
         return JsonResponse({
             'error': 'Error al procesar solicitud',
             'detalle': str(e)
@@ -526,8 +539,13 @@ def reporte_por_id(request):
     collar_id = data.get('sensor')
     username = data.get('username')
     
+    print(f"[MÓVIL] Parámetros extraídos:")
+    print(f"  - collar_id: {collar_id}")
+    print(f"  - username: {username}")
+    
     # Validar parámetros requeridos
     if not collar_id or not username:
+        print("[MÓVIL] ❌ Parámetros incompletos")
         return JsonResponse({
             'error': 'Parámetros incompletos',
             'detalle': 'Se requieren sensor y username'
@@ -535,16 +553,22 @@ def reporte_por_id(request):
     
     try:
         # Buscar bovino activo
+        print(f"[MÓVIL] Buscando bovino con collar_id={collar_id}...")
         bovino = Bovinos.objects.filter(idCollar=collar_id, activo=True).first()
         if not bovino:
+            print(f"[MÓVIL] ❌ Bovino no encontrado")
             return JsonResponse({
                 'error': 'Bovino no encontrado',
                 'detalle': f'No existe bovino activo con collar {collar_id}'
             }, status=404)
         
+        print(f"[MÓVIL] ✓ Bovino encontrado: {bovino.nombre}")
+        
         # Buscar usuario
+        print(f"[MÓVIL] Buscando usuario: {username}...")
         user = User.objects.filter(username=username).first()
         if not user:
+            print(f"[MÓVIL] ❌ Usuario no encontrado")
             return JsonResponse({
                 'error': 'Usuario no encontrado',
                 'detalle': f'El usuario {username} no existe'
@@ -564,11 +588,18 @@ def reporte_por_id(request):
         registro = False
         mensaje_registro = 'No se registró - fuera de horario'
 
+        print(f"[MÓVIL] ✓ Usuario encontrado: {user.username}")
+        
         # Verificar condiciones para registro de mañana
+        print(f"[MÓVIL] Verificando condiciones de registro...")
+        print(f"[MÓVIL]   - Última lectura: {dato.fecha_lectura} {dato.hora_lectura}")
+        print(f"[MÓVIL]   - Estado de salud: {dato.estado_salud}")
+        
         if (checkingMorning(bovino) and 
             checkHoursMorning(dato.hora_lectura) and 
             checkDate(dato.fecha_lectura)):
             
+            print(f"[MÓVIL] ✓ Condiciones cumplidas para turno MAÑANA")
             ControlMonitoreo.objects.create(
                 id_Lectura=dato,
                 id_User=user,
@@ -581,12 +612,15 @@ def reporte_por_id(request):
               checkHoursAfternoon(dato.hora_lectura) and 
               checkDate(dato.fecha_lectura)):
             
+            print(f"[MÓVIL] ✓ Condiciones cumplidas para turno TARDE")
             ControlMonitoreo.objects.create(
                 id_Lectura=dato,
                 id_User=user,
             )
             registro = True
             mensaje_registro = 'Registrado en turno de tarde'
+        else:
+            print(f"[MÓVIL] ⚠️ No se cumplieron condiciones de registro")
 
         # Construir respuesta usando propiedades del modelo
         reporte = {
@@ -602,7 +636,72 @@ def reporte_por_id(request):
             'mensaje': mensaje_registro,
         }
         
+        print(f"[MÓVIL] ✅ Respuesta enviada: {reporte}")
+        print("="*80 + "\n")
         return JsonResponse({'reporte': reporte}, status=200)
+        
+    except Exception as e:
+        print(f"[MÓVIL] ❌ Error general: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"[MÓVIL] Traceback: {traceback.format_exc()}")
+        print("="*80 + "\n")
+        return JsonResponse({
+            'error': 'Error interno del servidor',
+            'detalle': str(e)
+        }, status=500)
+
+@csrf_exempt
+def obtener_datos_collar(request, collar_id):
+    """
+    API endpoint GET para obtener datos de monitoreo de un bovino por collar ID
+    
+    GET /api/movil/datos/<collar_id>/
+    
+    Returns:
+        JsonResponse con datos del último registro del bovino
+    """
+    if request.method != 'GET':
+        return JsonResponse({
+            'error': 'Método no permitido',
+            'detalle': 'Use GET para esta solicitud'
+        }, status=405)
+    
+    try:
+        # Buscar bovino activo por collar_id
+        bovino = Bovinos.objects.filter(idCollar=collar_id, activo=True).first()
+        
+        if not bovino:
+            return JsonResponse({
+                'error': 'Bovino no encontrado',
+                'detalle': f'No existe un bovino activo con collar ID {collar_id}'
+            }, status=404)
+        
+        # Obtener último registro de monitoreo
+        ultimo_dato = Lectura.objects.filter(id_Bovino=bovino).order_by('-id_Lectura').first()
+        
+        if not ultimo_dato:
+            return JsonResponse({
+                'error': 'Sin datos',
+                'detalle': f'No hay registros para el bovino con collar {collar_id}'
+            }, status=404)
+        
+        # Construir respuesta
+        datos = {
+            'collar_id': bovino.idCollar,
+            'bovino_id': bovino.id_Bovinos,
+            'nombre': bovino.nombre,
+            'ultimo_registro': {
+                'id': ultimo_dato.id_Lectura,
+                'temperatura': ultimo_dato.temperatura_valor,
+                'pulsaciones': ultimo_dato.pulsaciones_valor,
+                'estado_salud': ultimo_dato.estado_salud,
+                'temperatura_normal': ultimo_dato.temperatura_normal,
+                'pulsaciones_normales': ultimo_dato.pulsaciones_normales,
+                'fecha': f"{ultimo_dato.fecha_lectura} {ultimo_dato.hora_lectura}"
+            }
+        }
+        
+        return JsonResponse({'datos': datos}, status=200)
         
     except Exception as e:
         return JsonResponse({
@@ -756,8 +855,10 @@ def apiEdit(request, user_id):
     API endpoint para editar usuario desde app móvil
     Actualiza tanto el User como el PersonalInfo
     
-    POST /api/user/<user_id>/edit/
-    Body: form data con campos a actualizar
+    POST/PUT/PATCH /api/editar/<user_id>/
+    Body: form data o JSON con campos a actualizar
+    
+    GET: Retorna los datos actuales del usuario
     
     Returns:
         JsonResponse con estado de actualización
@@ -771,13 +872,40 @@ def apiEdit(request, user_id):
             'detalle': str(e)
         }, status=404)
 
-    if request.method != 'POST':
+    # Permitir GET para obtener datos del usuario
+    if request.method == 'GET':
+        return JsonResponse({
+            'data': {
+                'user_id': user.id,
+                'email': user.email,
+                'username': user.username,
+                'nombre': user.first_name,
+                'apellido': user.last_name,
+                'cedula': profile.cedula if profile.cedula else '',
+                'telefono': profile.telefono if profile.telefono else '',
+                'is_active': user.is_active
+            }
+        }, status=200)
+
+    # Aceptar POST, PUT o PATCH para edición
+    if request.method not in ['POST', 'PUT', 'PATCH']:
         return JsonResponse({
             'error': 'Método no permitido',
-            'detalle': 'Use POST para editar usuarios'
+            'detalle': 'Use POST, PUT o PATCH para editar usuarios'
         }, status=405)
     
-    form = PersonalInfoForm(request.POST, instance=profile)
+    # Intentar parsear JSON si el content-type es application/json
+    data = request.POST
+    if request.content_type and 'application/json' in request.content_type:
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({
+                'error': 'JSON inválido',
+                'detalle': 'El body debe ser JSON válido'
+            }, status=400)
+    
+    form = PersonalInfoForm(data, instance=profile)
     
     if form.is_valid():
         try:
@@ -837,7 +965,15 @@ def lecturaDatosArduino(request):
     Returns:
         JsonResponse con estado de guardado
     """
+    print("\n" + "="*80)
+    print("[ARDUINO] Nueva petición recibida")
+    print(f"[ARDUINO] Método: {request.method}")
+    print(f"[ARDUINO] Headers: {dict(request.headers)}")
+    print(f"[ARDUINO] Content-Type: {request.content_type}")
+    print("="*80)
+    
     if request.method != 'POST':
+        print(f"[ARDUINO] ❌ Método {request.method} no permitido")
         return JsonResponse({
             'error': 'Método no permitido',
             'detalle': 'Use POST para enviar lecturas'
@@ -846,13 +982,17 @@ def lecturaDatosArduino(request):
     try:
         # Decodificar JSON del body
         body_text = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
+        print(f"[ARDUINO] Body recibido (raw): {body_text[:500]}..." if len(body_text) > 500 else f"[ARDUINO] Body recibido (raw): {body_text}")
+        
         if not body_text:
+            print("[ARDUINO] ❌ Body vacío")
             return JsonResponse({
                 'error': 'Body vacío',
                 'detalle': 'El body no puede estar vacío'
             }, status=400)
         
         lecturaDecoded = json.loads(body_text)
+        print(f"[ARDUINO] JSON parseado: {lecturaDecoded}")
         
         # Extraer datos del JSON
         collar_id = lecturaDecoded.get('collar_id')
@@ -863,7 +1003,15 @@ def lecturaDatosArduino(request):
         pulsaciones = lecturaDecoded.get('pulsaciones', random.randint(41, 60))
 
         # Validar que todos los datos requeridos estén presentes
+        print(f"[ARDUINO] Datos extraídos:")
+        print(f"  - collar_id: {collar_id}")
+        print(f"  - nombre_vaca: {nombre_vaca}")
+        print(f"  - mac_collar: {mac_collar}")
+        print(f"  - temperatura: {temperatura}")
+        print(f"  - pulsaciones: {pulsaciones}")
+        
         if not all([collar_id, nombre_vaca, mac_collar, temperatura]):
+            print("[ARDUINO] ❌ Datos incompletos")
             return JsonResponse({
                 'error': 'Datos incompletos',
                 'detalle': 'Se requieren collar_id, nombre_vaca, mac_collar y temperatura',
@@ -881,6 +1029,7 @@ def lecturaDatosArduino(request):
             }, status=400)
 
         # Verificar o crear bovino
+        print(f"[ARDUINO] Buscando/creando bovino con collar_id={collar_id}...")
         bovino, creado = Bovinos.objects.get_or_create(
             idCollar=collar_id,
             defaults={
@@ -890,15 +1039,19 @@ def lecturaDatosArduino(request):
                 'activo': True
             }
         )
+        print(f"[ARDUINO] Bovino {'CREADO' if creado else 'ENCONTRADO'}: {bovino.nombre} (ID: {bovino.id_Bovinos})")
         
         # Si el bovino ya existía, actualizar su nombre si cambió
         if not creado and bovino.nombre != nombre_vaca:
+            print(f"[ARDUINO] Actualizando nombre: {bovino.nombre} -> {nombre_vaca}")
             bovino.nombre = nombre_vaca
             bovino.save(update_fields=['nombre'])
 
         # Crear registros de temperatura y pulsaciones
+        print(f"[ARDUINO] Creando registros de sensores...")
         temperatura_obj = Temperatura.objects.create(valor=temperatura)
         pulsaciones_obj = Pulsaciones.objects.create(valor=pulsaciones)
+        print(f"[ARDUINO] Temperatura ID: {temperatura_obj.id_Temperatura}, Pulsaciones ID: {pulsaciones_obj.id_Pulsaciones}")
         
         # Crear lectura
         lectura = Lectura.objects.create(
@@ -908,8 +1061,10 @@ def lecturaDatosArduino(request):
             fecha_lectura=datetime.now(),
             hora_lectura=datetime.now().time()
         )
+        print(f"[ARDUINO] Lectura creada ID: {lectura.id_Lectura}")
+        print(f"[ARDUINO] Estado de salud: {lectura.estado_salud}")
         
-        return JsonResponse({
+        respuesta = {
             'mensaje': 'Datos guardados exitosamente',
             'data': {
                 'lectura_id': lectura.id_Lectura,
@@ -920,14 +1075,23 @@ def lecturaDatosArduino(request):
                 'estado_salud': lectura.estado_salud,
                 'bovino_nuevo': creado
             }
-        }, status=201)
+        }
+        print(f"[ARDUINO] ✅ Respuesta enviada: {respuesta}")
+        print("="*80 + "\n")
+        return JsonResponse(respuesta, status=201)
         
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        print(f"[ARDUINO] ❌ Error JSON: {str(e)}")
+        print("="*80 + "\n")
         return JsonResponse({
             'error': 'JSON inválido',
             'detalle': 'El body no es un JSON válido'
         }, status=400)
     except Exception as e:
+        print(f"[ARDUINO] ❌ Error general: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"[ARDUINO] Traceback: {traceback.format_exc()}")
+        print("="*80 + "\n")
         return JsonResponse({
             'error': 'Error interno del servidor',
             'detalle': str(e)

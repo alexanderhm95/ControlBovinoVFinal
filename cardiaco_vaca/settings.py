@@ -31,12 +31,18 @@ ALLOWED_HOSTS = [
     'control-bovino-app.azurewebsites.net',
     '127.0.0.1',
     'localhost',
+    '190.96.102.30',  # IP del servidor
     'pmonitunl.vercel.app',
     'controlbovinovfinal-production.up.railway.app',
     '.herokuapp.com',  # Permite todos los subdominios de Heroku
     'control-bovino-vfinal.fly.dev',  # Fly.io
     '.fly.dev',  # Permite todos los subdominios de Fly.io
 ] + os.environ.get('ALLOWED_HOSTS', '').split(',')
+
+# Configuración de proxy para Nginx/Gunicorn
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 LOGIN_REDIRECT_URL = ('dashboard_redirect')
 LOGOUT_REDIRECT_URL = ('login')
 

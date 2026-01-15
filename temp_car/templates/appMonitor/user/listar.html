@@ -152,7 +152,7 @@ Listar Usuarios
                             <td class="text-center">
                                 <div class="d-flex justify-content-center">
                                     {% if usuario.id %}
-                                    <a href="{% url 'editar_usuario' usuario.userId %}" class="btn btn-warning btn-sm mx-2 rounded-2">Editar</a>
+                                    <button class="btn btn-warning btn-sm mx-2 rounded-2 btn-editar" data-user-id="{{ usuario.userId }}">Editar</button>
                                     {% endif %}
                                     {% if usuario.userId %}
                                     {% if usuario.activo %}
@@ -193,7 +193,7 @@ Listar Usuarios
                         </p>
                         <div class="d-flex justify-content-center">
                             {% if usuario.id %}
-                            <a href="{% url 'editar_usuario' usuario.userId %}" class="btn btn-warning btn-sm mx-2 rounded-2">Editar</a>
+                            <button class="btn btn-warning btn-sm mx-2 rounded-2 btn-editar" data-user-id="{{ usuario.userId }}">Editar</button>
                             {% endif %}
                             {% if usuario.userId %}
                             {% if usuario.activo %}
@@ -210,10 +210,66 @@ Listar Usuarios
         </div>
     </div>
 </div>
+
+<!-- Modal de Edición -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-white" id="editModalLabel">
+                    <i class="fas fa-user-edit me-2"></i>Editar Usuario
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="edit_user_id" name="user_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_nombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="edit_nombre" name="nombre" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_apellido" class="form-label">Apellido</label>
+                        <input type="text" class="form-control" id="edit_apellido" name="apellido" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit_email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_cedula" class="form-label">Cédula</label>
+                        <input type="text" class="form-control" id="edit_cedula" name="cedula">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_telefono" class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" id="edit_telefono" name="telefono">
+                    </div>
+
+                    <div class="alert alert-info d-none" id="editMessage"></div>
+                    <div class="alert alert-danger d-none" id="editError"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="saveChangesBtn">
+                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
+    // Validación de formularios
     (function() {
         'use strict';
         window.addEventListener('load', function() {
@@ -229,5 +285,132 @@ Listar Usuarios
             });
         }, false);
     })();
+
+    // Modal de edición
+    document.addEventListener('DOMContentLoaded', function() {
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        const editForm = document.getElementById('editUserForm');
+        const saveBtn = document.getElementById('saveChangesBtn');
+        const editMessage = document.getElementById('editMessage');
+        const editError = document.getElementById('editError');
+
+        // Manejar clic en botones de editar
+        document.querySelectorAll('.btn-editar').forEach(button => {
+            button.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                loadUserData(userId);
+            });
+        });
+
+        // Cargar datos del usuario
+        function loadUserData(userId) {
+            editMessage.classList.add('d-none');
+            editError.classList.add('d-none');
+
+            fetch(`/api/editar/${userId}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.data) {
+                    document.getElementById('edit_user_id').value = data.data.user_id;
+                    document.getElementById('edit_nombre').value = data.data.nombre || '';
+                    document.getElementById('edit_apellido').value = data.data.apellido || '';
+                    document.getElementById('edit_email').value = data.data.email || '';
+                    document.getElementById('edit_cedula').value = data.data.cedula || '';
+                    document.getElementById('edit_telefono').value = data.data.telefono || '';
+                    editModal.show();
+                } else {
+                    showError('No se pudieron cargar los datos del usuario');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Error al cargar los datos del usuario');
+            });
+        }
+
+        // Guardar cambios
+        saveBtn.addEventListener('click', function() {
+            const userId = document.getElementById('edit_user_id').value;
+            const formData = {
+                nombre: document.getElementById('edit_nombre').value,
+                apellido: document.getElementById('edit_apellido').value,
+                email: document.getElementById('edit_email').value,
+                cedula: document.getElementById('edit_cedula').value,
+                telefono: document.getElementById('edit_telefono').value
+            };
+
+            editMessage.classList.add('d-none');
+            editError.classList.add('d-none');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Guardando...';
+
+            fetch(`/api/editar/${userId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
+
+                if (data.message || data.data) {
+                    showMessage('Usuario actualizado correctamente');
+                    setTimeout(() => {
+                        editModal.hide();
+                        location.reload();
+                    }, 1500);
+                } else if (data.error) {
+                    showError(data.detalle || data.error);
+                    if (data.errores) {
+                        const errores = Object.values(data.errores).join(', ');
+                        showError(errores);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
+                showError('Error al guardar los cambios');
+            });
+        });
+
+        function showMessage(msg) {
+            editMessage.textContent = msg;
+            editMessage.classList.remove('d-none');
+            editError.classList.add('d-none');
+        }
+
+        function showError(msg) {
+            editError.textContent = msg;
+            editError.classList.remove('d-none');
+            editMessage.classList.add('d-none');
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
 </script>
 {% endblock %}
