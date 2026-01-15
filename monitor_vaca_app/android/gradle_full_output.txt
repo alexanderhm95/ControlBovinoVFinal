@@ -1,0 +1,194 @@
+﻿Starting a Gradle Daemon, 1 busy and 1 incompatible Daemons could not be reused, use --status for details
+> Task :gradle:checkKotlinGradlePluginConfigurationErrors
+> Task :gradle:compileKotlin UP-TO-DATE
+> Task :gradle:compileJava NO-SOURCE
+> Task :gradle:compileGroovy NO-SOURCE
+> Task :gradle:pluginDescriptors UP-TO-DATE
+> Task :gradle:processResources UP-TO-DATE
+> Task :gradle:classes UP-TO-DATE
+> Task :gradle:jar UP-TO-DATE
+
+> Configure project :app
+The org.gradle.api.plugins.Convention type has been deprecated. This is scheduled to be removed in Gradle 9.0. Consult the upgrading guide for further information: https://docs.gradle.org/8.7/userguide/upgrading_version_8.html#deprecated_access_to_conventions
+	at build_8n83rzpkm0wiel2e7du1s8izc$_run_closure3.doCall$original(C:\Users\bherrera\Documents\GitHub\ControlBovinoVFinal\monitor_vaca_app\android\build.gradle:26)
+	(Run with --stacktrace to get the full stack trace of this deprecation warning.)
+.\gradlew.bat : Warning: Flutter support for your project's Android Gradle Plugin version (Android Gradle Plugin version 8.2.0) will soon 
+be dropped. Please upgrade your Android Gradle Plugin version to a version of at least Android Gradle Plugin version 8.6.0 soon.
+En línea: 1 Carácter: 149
++ ... Program Files\Java\jdk-21" ; .\gradlew.bat assembleDebug 2>&1 | Out-F ...
++                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Warning: Flutte...ion 8.6.0 soon.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+
+Potential fix: Your project's AGP version is typically defined in the plugins block of the `settings.gradle` file 
+(C:\Users\bherrera\Documents\GitHub\ControlBovinoVFinal\monitor_vaca_app\android/settings.gradle), by a plugin with the id of 
+com.android.application. 
+If you don't see a plugins block, your project was likely created with an older template version. In this case it is most likely defined 
+in the top-level build.gradle file (C:\Users\bherrera\Documents\GitHub\ControlBovinoVFinal\monitor_vaca_app\android/build.gradle) by the 
+following line in the dependencies block of the buildscript: "classpath 'com.android.tools.build:gradle:<version>'".
+
+Warning: Flutter support for your project's Kotlin version (1.9.10) will soon be dropped. Please upgrade your Kotlin version to a version 
+of at least 2.1.0 soon.
+Alternatively, use the flag "--android-skip-build-dependency-validation" to bypass this check.
+
+Potential fix: Your project's KGP version is typically defined in the plugins block of the `settings.gradle` file 
+(C:\Users\bherrera\Documents\GitHub\ControlBovinoVFinal\monitor_vaca_app\android/settings.gradle), by a plugin with the id of 
+org.jetbrains.kotlin.android. 
+If you don't see a plugins block, your project was likely created with an older template version, in which case it is most likely defined 
+in the top-level build.gradle file (C:\Users\bherrera\Documents\GitHub\ControlBovinoVFinal\monitor_vaca_app\android/build.gradle) by the 
+ext.kotlin_version property.
+
+Warning: SDK processing. This version only understands SDK XML versions up to 3 but an SDK XML file of version 4 was encountered. This 
+can happen if you use versions of Android Studio and the command-line tools that were released at different times.
+WARNING: We recommend using a newer Android Gradle plugin to use compileSdk = 36
+
+This Android Gradle plugin (8.2.0) was tested up to compileSdk = 34.
+
+You are strongly encouraged to update your project to use a newer
+Android Gradle plugin that has been tested with compileSdk = 36.
+
+If you are already using the latest version of the Android Gradle plugin,
+you may need to wait until a newer version with support for compileSdk = 36 is available.
+
+To suppress this warning, add/update
+    android.suppressUnsupportedCompileSdk=36
+to this project's gradle.properties.
+
+> Task :app:DebugMinSdkCheck
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:compileFlutterBuildDebug
+> Task :app:packJniLibsflutterBuildDebug
+> Task :fluttertoast:preBuild UP-TO-DATE
+> Task :fluttertoast:preDebugBuild UP-TO-DATE
+> Task :permission_handler_android:preBuild UP-TO-DATE
+> Task :permission_handler_android:preDebugBuild UP-TO-DATE
+> Task :shared_preferences_android:preBuild UP-TO-DATE
+> Task :fluttertoast:writeDebugAarMetadata
+> Task :permission_handler_android:writeDebugAarMetadata
+> Task :shared_preferences_android:preDebugBuild UP-TO-DATE
+> Task :shared_preferences_android:writeDebugAarMetadata
+> Task :app:cleanMergeDebugAssets
+> Task :app:checkDebugAarMetadata
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :fluttertoast:mergeDebugShaders
+> Task :fluttertoast:compileDebugShaders NO-SOURCE
+> Task :fluttertoast:generateDebugAssets UP-TO-DATE
+> Task :fluttertoast:packageDebugAssets
+> Task :permission_handler_android:mergeDebugShaders
+> Task :permission_handler_android:compileDebugShaders NO-SOURCE
+> Task :permission_handler_android:generateDebugAssets UP-TO-DATE
+> Task :permission_handler_android:packageDebugAssets
+> Task :shared_preferences_android:mergeDebugShaders
+> Task :shared_preferences_android:compileDebugShaders NO-SOURCE
+> Task :shared_preferences_android:generateDebugAssets UP-TO-DATE
+> Task :shared_preferences_android:packageDebugAssets
+> Task :app:mergeDebugAssets
+> Task :app:copyFlutterAssetsDebug
+> Task :app:generateDebugResValues
+> Task :fluttertoast:generateDebugResValues
+> Task :fluttertoast:generateDebugResources
+> Task :fluttertoast:packageDebugResources
+> Task :permission_handler_android:generateDebugResValues
+> Task :permission_handler_android:generateDebugResources
+> Task :permission_handler_android:packageDebugResources
+> Task :shared_preferences_android:generateDebugResValues
+> Task :shared_preferences_android:generateDebugResources
+> Task :shared_preferences_android:packageDebugResources
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :fluttertoast:extractDeepLinksDebug
+> Task :permission_handler_android:extractDeepLinksDebug
+> Task :shared_preferences_android:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+
+> Task :fluttertoast:processDebugManifest
+package="io.github.ponnamkarthik.toast.fluttertoast" found in source AndroidManifest.xml: C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\fluttertoast-8.2.6\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.github.ponnamkarthik.toast.fluttertoast" from the source AndroidManifest.xml: C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\fluttertoast-8.2.6\android\src\main\AndroidManifest.xml.
+
+> Task :shared_preferences_android:processDebugManifest
+package="io.flutter.plugins.sharedpreferences" found in source AndroidManifest.xml: C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.2.3\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="io.flutter.plugins.sharedpreferences" from the source AndroidManifest.xml: C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\shared_preferences_android-2.2.3\android\src\main\AndroidManifest.xml.
+
+> Task :permission_handler_android:processDebugManifest
+package="com.baseflow.permissionhandler" found in source AndroidManifest.xml: C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.0.6\android\src\main\AndroidManifest.xml.
+Setting the namespace via the package attribute in the source AndroidManifest.xml is no longer supported, and the value is ignored.
+Recommendation: remove package="com.baseflow.permissionhandler" from the source AndroidManifest.xml: C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.0.6\android\src\main\AndroidManifest.xml.
+
+> Task :fluttertoast:compileDebugLibraryResources
+> Task :app:processDebugMainManifest
+> Task :app:outputDebugAppLinkSettings
+> Task :app:processDebugManifest
+> Task :fluttertoast:parseDebugLocalResources
+> Task :permission_handler_android:compileDebugLibraryResources
+> Task :permission_handler_android:parseDebugLocalResources
+> Task :shared_preferences_android:compileDebugLibraryResources
+> Task :fluttertoast:generateDebugRFile
+> Task :permission_handler_android:generateDebugRFile
+> Task :shared_preferences_android:parseDebugLocalResources
+> Task :shared_preferences_android:generateDebugRFile
+> Task :fluttertoast:javaPreCompileDebug
+> Task :permission_handler_android:javaPreCompileDebug
+> Task :shared_preferences_android:javaPreCompileDebug
+
+> Task :permission_handler_android:compileDebugJavaWithJavac
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+C:\Users\bherrera\AppData\Local\Pub\Cache\hosted\pub.dev\permission_handler_android-12.0.6\android\src\main\java\com\baseflow\permissionha
+ndler\PermissionHandlerPlugin.java:26: error: cannot find symbol
+    @Nullable private io.flutter.plugin.common.PluginRegistry.Registrar pluginRegistrar;
+                                                             ^
+  symbol:   class Registrar
+  location: interface PluginRegistry
+1 error
+3 warnings
+
+> Task :permission_handler_android:compileDebugJavaWithJavac FAILED
+> Task :app:processDebugManifestForPackage
+> Task :fluttertoast:compileDebugKotlin
+e: file:///C:/Users/bherrera/AppData/Local/Pub/Cache/hosted/pub.dev/fluttertoast-8.2.6/android/src/main/kotlin/io/github/ponnamkarthik/toa
+st/fluttertoast/FlutterToastPlugin.kt:9:48 Unresolved reference: Registrar
+
+> Task :fluttertoast:compileDebugKotlin FAILED
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':permission_handler_android:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':fluttertoast:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 1m 18s
+59 actionable tasks: 55 executed, 4 up-to-date

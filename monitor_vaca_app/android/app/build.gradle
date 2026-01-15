@@ -1,0 +1,66 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+android {
+    namespace = "com.example.monitor_vaca"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "com.example.monitor_vaca"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+        signingConfigs {
+        release {
+            keyAlias 'my-key-alias' // Alias de la clave en el keystore
+            keyPassword 'admin1234' // Contraseña de la clave en el keystore
+            storeFile file('C:/key/monitor.jks') // Ruta al archivo keystore
+            storePassword 'admin1234' // Contraseña del keystore
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release // Configurar la firma para la build de release
+            // Otras configuraciones de buildTypes
+        }
+
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+
+dependencies {}
