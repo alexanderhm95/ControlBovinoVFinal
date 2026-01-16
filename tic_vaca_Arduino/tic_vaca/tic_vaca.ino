@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <math.h>
 #include <WiFi.h>
 #include "WiFiConnection.h"
 #include "TemperatureSensor.h"
@@ -26,9 +27,22 @@ void setup() {
     
     // Solo continuar si estamos conectados a WiFi
     if (WiFi.status() == WL_CONNECTED) {
-        setupTemperatureSensor();
-        setupHeartRateSensor();
-        Serial.println("Sistema iniciado correctamente");
+        bool tempSensorOK = setupTemperatureSensor();
+        bool sensorOK = setupHeartRateSensor();
+        
+        Serial.println("\n=== ESTADO DE SENSORES ===");
+        if (tempSensorOK) {
+            Serial.println("✅ Sensor de temperatura: OK");
+        } else {
+            Serial.println("⚠️ Sensor de temperatura: SIMULADO (38-39°C)");
+        }
+        
+        if (sensorOK) {
+            Serial.println("✅ Sensor de ritmo cardíaco: OK");
+        } else {
+            Serial.println("⚠️ Sensor de ritmo cardíaco: SIMULADO (calculado)");
+        }
+        Serial.println("========================\n");
     }
 }
 
@@ -62,18 +76,22 @@ void loop() {
         return;
     }
     
-    measureHeartRate();
+    float temperature = getTemperature();
+    measureHeartRate(temperature);
     
     if ((unsigned long)(millis() - previousMillis) >= printPeriod) {
         previousMillis = millis();
-        float temperature = getTemperature();
         int pulsaciones = getHeartRate();
         String collarID = COLLAR_UNO;
         
         Serial.print("Collar ID=");
         Serial.print(collarID);
         Serial.print(", Temp=");
-        Serial.print(temperature);
+        if (isnan(temperature)) {
+            Serial.print("N/D");
+        } else {
+            Serial.print(temperature);
+        }
         Serial.print(", Pulsaciones=");
         Serial.print(pulsaciones);
         Serial.println();
