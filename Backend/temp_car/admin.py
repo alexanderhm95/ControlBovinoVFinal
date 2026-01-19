@@ -225,7 +225,6 @@ class ControlMonitoreoAdmin(admin.ModelAdmin):
             '<span style="color: #dc3545;">✗</span>'
         )
     tiene_observaciones.short_description = 'Obs.'
-    tiene_observaciones.boolean = True
     
     def tiene_accion(self, obj):
         """Indica si tiene acción tomada"""
@@ -237,7 +236,6 @@ class ControlMonitoreoAdmin(admin.ModelAdmin):
             '<span style="color: #dc3545;">✗</span>'
         )
     tiene_accion.short_description = 'Acción'
-    tiene_accion.boolean = True
 
 
 # Personalización del sitio de administración
