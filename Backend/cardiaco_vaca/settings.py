@@ -31,6 +31,7 @@ ALLOWED_HOSTS = [
     'control-bovino-app.azurewebsites.net',
     '127.0.0.1',
     'localhost',
+    '0.0.0.0',  # Dirección local
     '190.96.102.30',  # IP del servidor
     'pmonitunl.vercel.app',
     'controlbovinovfinal-production.up.railway.app',

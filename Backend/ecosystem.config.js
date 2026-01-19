@@ -3,9 +3,9 @@ module.exports = {
     {
       name: 'control-bovino-backend',
       script: 'manage.py',
-      interpreter: 'python',
-      args: 'runserver 0.0.0.0:8000',
-      cwd: '/Users/bherrera/Documents/GitHub/ControlBovinoVFinal/Backend',
+      interpreter: '/home/administrador/ControlBovinoVFinal/venv/bin/python',
+      args: 'runserver 0.0.0.0:3000',
+      cwd: '/home/administrador/ControlBovinoVFinal/Backend',
       env: {
         PYTHONUNBUFFERED: 1,
         DJANGO_SETTINGS_MODULE: 'cardiaco_vaca.settings',
@@ -31,9 +31,9 @@ module.exports = {
     },
     {
       name: 'control-bovino-backend-gunicorn',
-      script: 'gunicorn',
-      args: 'cardiaco_vaca.wsgi:application --bind 0.0.0.0:8000 --workers 4 --timeout 120',
-      cwd: '/Users/bherrera/Documents/GitHub/ControlBovinoVFinal/Backend',
+      script: '/home/administrador/ControlBovinoVFinal/venv/bin/gunicorn',
+      args: 'cardiaco_vaca.wsgi:application --bind 0.0.0.0:3000 --workers 4 --timeout 120',
+      cwd: '/home/administrador/ControlBovinoVFinal/Backend',
       env: {
         PYTHONUNBUFFERED: 1,
         DJANGO_SETTINGS_MODULE: 'cardiaco_vaca.settings',
