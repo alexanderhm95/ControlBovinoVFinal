@@ -88,8 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Nombre de la vaca: $nombreVaca');
       final registrado = datos?['registrado'] ?? false;
       print('Registrado: $registrado');
-      final username = Provider.of<UserProvider>(context, listen: false).user?.nombres ?? '';
-      print('Usuario: $username');
+      final username = Provider.of<UserProvider>(context, listen: false).user?.email ?? '';
+      print('Email de usuario: $username');
 
       _updateMonitoringMessage(sensorNumber, collarId, nombreVaca, temperatura, pulsaciones, registrado);
       
@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // El usuario confirmó - registrar el control
       try {
         final exito = await ApiService.registrarControl(
-          username: username,
+          email: username,
           collarId: collarId,
           lecturaId: lecturaId,
           observaciones: observaciones,
