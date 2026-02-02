@@ -1,0 +1,12 @@
+[WARNING] 2026-01-14 22:34:19 | django.request | log_response:241 | Bad Request: /api/arduino/monitoreo
+[ERROR] 2026-01-14 22:34:42 | django.request | log_response:241 | Internal Server Error: /api/arduino/monitoreo
+[WARNING] 2026-01-15 04:43:35 | django.request | log_response:241 | Not Found: /SDK/webLanguage
+[WARNING] 2026-01-15 05:07:24 | django.request | log_response:241 | Bad Request: /
+[WARNING] 2026-01-15 05:08:10 | django.request | log_response:241 | Not Found: /SDK/webLanguage
+[WARNING] 2026-01-15 05:34:42 | django.request | log_response:241 | Not Found: /SDK/webLanguage
+[WARNING] 2026-01-15 06:20:01 | django.request | log_response:241 | Not Found: /wiki
+[WARNING] 2026-01-15 10:09:57 | django.request | log_response:241 | Unauthorized: /api/movil/login/
+[WARNING] 2026-01-15 10:09:59 | django.request | log_response:241 | Not Found: /api/monitor/datos/1/
+[WARNING] 2026-01-15 10:09:59 | django.request | log_response:241 | Not Found: /api/ultimo/registro/1
+[WARNING] 2026-01-15 10:22:13 | django.request | log_response:241 | Not Found: /SDK/webLanguage
+[WARNING] 2026-01-15 12:22:38 | django.request | log_response:241 | Not Found: /manager/html

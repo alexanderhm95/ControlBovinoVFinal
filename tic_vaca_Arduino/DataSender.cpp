@@ -4,8 +4,8 @@
 
 const char* serverUrl = "https://pmonitunl.vercel.app/api/arduino/monitoreo";
 
-// Clave API para autenticación (configurable desde el header)
-const char* API_KEY = "YOUR_API_KEY_HERE"; // Reemplazar con clave real
+// API Key para autenticación en el backend
+const char* API_KEY = "sk_arduino_controlbovino_2024";
 
 void sendDataToServer(String collarID, float temperature, String nombre_vaca, int pulsaciones, String macAddress) {
     HTTPClient http;
