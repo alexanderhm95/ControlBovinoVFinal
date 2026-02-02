@@ -38,18 +38,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> startMonitoring(BuildContext context, int sensorNumber) async {
-    int countdown = 5;
+    int countdown = 59;
     Timer timer;
 
     void updateState() {
       setState(() {
         if (sensorNumber == 1) {
           isMonitoring1 = true;
-          monitoringMessage1 = 'Resultados en $countdown';
+          monitoringMessage1 = 'Resultados en $countdown segundos';
           textColor1 = Colors.black;
         } else {
           isMonitoring2 = true;
-          monitoringMessage2 = 'Resultados en $countdown';
+          monitoringMessage2 = 'Resultados en $countdown segundos';
           textColor2 = Colors.black;
         }
       });
