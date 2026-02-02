@@ -41,7 +41,7 @@ android {
 
         signingConfigs {
         release {
-            keyAlias 'my-key-alias' // Alias de la clave en el keystore
+            keyAlias 'monitor' // Alias de la clave en el keystore
             keyPassword 'admin1234' // Contraseña de la clave en el keystore
             storeFile file('C:/key/monitor.jks') // Ruta al archivo keystore
             storePassword 'admin1234' // Contraseña del keystore
