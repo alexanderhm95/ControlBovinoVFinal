@@ -201,10 +201,10 @@ Temperatura
                                     <tbody>
                                         {% for reporte in reportes %}
                                         <tr>
-                                            <td>{{ reporte.id_Bovino.idCollar }}</td>
-                                            <td>{{ reporte.id_Bovino.nombre }}</td>
-                                            <td>{{ reporte.fecha_lectura|date:"d-m-Y" }}</td>
-                                            <td>{{ reporte.id_Temperatura.valor }}</td>
+                                            <td>{{ reporte.id_Lectura.id_Bovino.idCollar }}</td>
+                                            <td>{{ reporte.id_Lectura.id_Bovino.nombre }}</td>
+                                            <td>{{ reporte.fecha_lectura|date:"d-m-Y" }} {{ reporte.hora_lectura|time:"H:i" }}</td>
+                                            <td>{{ reporte.id_Lectura.id_Temperatura.valor }}°C</td>
                                         </tr>
                                         {% empty %}
                                         <tr>
@@ -270,7 +270,7 @@ $(document).ready(function() {
                 var registros = data.ultimos_registros;
                 var ctx = document.getElementById('myChart' + idCollar).getContext('2d');
                 var labels = registros.map(function(item) {
-                    return item.fecha_registro;
+                    return item.fecha_control;
                 });
                 var temperaturas = registros.map(function(item) {
                     return item.temperatura;

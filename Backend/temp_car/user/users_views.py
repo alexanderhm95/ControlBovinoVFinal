@@ -62,11 +62,26 @@ def user_login(request):
 def user_logout(request):
     """
     Vista de cierre de sesión
-    Limpia la sesión y redirige al inicio
+    Limpia la sesión, cookies y redirige al login
     """
+    # Cerrar sesión de Django
     logout(request)
+    
+    # Crear respuesta de redirección
+    response = redirect('login')
+    
+    # Limpiar todas las cookies de sesión
+    response.delete_cookie('sessionid')
+    response.delete_cookie('django_language')
+    response.delete_cookie('csrftoken')
+    
+    # Limpiar caché para evitar que el navegador muestre datos cacheados
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
     messages.success(request, 'Sesión cerrada exitosamente.')
-    return redirect('/')
+    return response
 
 
 ####################################

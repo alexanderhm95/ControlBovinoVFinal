@@ -285,7 +285,7 @@ Monitoreo
                     var registros = data.ultimos_registros;
                     var ctx = document.getElementById('myChart' + idCollar).getContext('2d');
                     var labels = registros.map(function (item) {
-                        return item.fecha_registro;
+                        return item.fecha_control;
                     });
                     var temperaturas = registros.map(function (item) {
                         return item.temperatura;

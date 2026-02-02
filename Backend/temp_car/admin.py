@@ -95,7 +95,7 @@ class LecturaAdmin(admin.ModelAdmin):
         'temperatura_display',
         'pulsaciones_display',
         'fecha_lectura',
-        'hora_lectura',
+        'hora_lectura_guayaquil',
         'estado_badge'
     ]
     list_filter = ['fecha_lectura', 'id_Bovino']
@@ -182,7 +182,7 @@ class ControlMonitoreoAdmin(admin.ModelAdmin):
         'bovino_nombre',
         'id_User',
         'fecha_lectura',
-        'hora_lectura',
+        'hora_lectura_guayaquil',
         'tiene_observaciones',
         'tiene_accion'
     ]
@@ -219,9 +219,11 @@ class ControlMonitoreoAdmin(admin.ModelAdmin):
         """Indica si tiene observaciones"""
         if obj.observaciones:
             return format_html(
+                '{}',
                 '<span style="color: #28a745;">✓</span>'
             )
         return format_html(
+            '{}',
             '<span style="color: #dc3545;">✗</span>'
         )
     tiene_observaciones.short_description = 'Obs.'
@@ -229,12 +231,8 @@ class ControlMonitoreoAdmin(admin.ModelAdmin):
     def tiene_accion(self, obj):
         """Indica si tiene acción tomada"""
         if obj.accion_tomada:
-            return format_html(
-                '<span style="color: #28a745;">✓</span>'
-            )
-        return format_html(
-            '<span style="color: #dc3545;">✗</span>'
-        )
+            return format_html('<span style="color: #28a745;">{}</span>', '✓')
+        return format_html('<span style="color: #dc3545;">{}</span>', '✗')
     tiene_accion.short_description = 'Acción'
 
 

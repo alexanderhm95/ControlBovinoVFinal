@@ -7,7 +7,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
     Bovinos, Temperatura, Pulsaciones, Lectura, 
-    ControlMonitoreo, ControlManual, PersonalInfo
+    ControlMonitoreo, PersonalInfo
 )
 
 
@@ -54,7 +54,7 @@ class LecturaSerializer(serializers.ModelSerializer):
 
 
 class ControlMonitoreoSerializer(serializers.ModelSerializer):
-    """Serializer para controles de monitoreo"""
+    """Serializer para controles de monitoreo - integra controles automáticos y manuales"""
     lectura = LecturaSerializer(source='id_Lectura', read_only=True)
     usuario = serializers.StringRelatedField(source='id_User', read_only=True)
     
@@ -62,72 +62,8 @@ class ControlMonitoreoSerializer(serializers.ModelSerializer):
         model = ControlMonitoreo
         fields = [
             'id_Control', 'lectura', 'usuario', 'fecha_lectura', 
-            'hora_lectura', 'observaciones', 'accion_tomada'
+            'hora_lectura', 'turno', 'temperatura', 'pulsaciones',
+            'estado_salud', 'observaciones', 'accion_tomada',
+            'fecha_registro', 'fecha_actualizacion'
         ]
-
-
-class ControlManualSerializer(serializers.ModelSerializer):
-    """Serializer para controles manuales de salud"""
-    bovino = BovinosSerializer(source='id_Bovino', read_only=True)
-    usuario = serializers.StringRelatedField(source='id_User', read_only=True)
-    turno_display = serializers.CharField(source='get_turno_display', read_only=True)
-    
-    class Meta:
-        model = ControlManual
-        fields = [
-            'id_ControlManual', 'bovino', 'usuario', 'fecha_control', 
-            'turno', 'turno_display', 'temperatura', 'pulsaciones', 
-            'observaciones', 'estado_salud', 'fecha_registro', 'fecha_actualizacion'
-        ]
-        read_only_fields = ['id_ControlManual', 'bovino', 'usuario', 'estado_salud', 
-                           'fecha_registro', 'fecha_actualizacion']
-
-
-class ControlManualCreateSerializer(serializers.ModelSerializer):
-    """Serializer para crear controles manuales"""
-    collar_id = serializers.IntegerField(write_only=True, help_text="ID del collar del bovino")
-    
-    class Meta:
-        model = ControlManual
-        fields = [
-            'collar_id', 'fecha_control', 'turno', 'temperatura', 
-            'pulsaciones', 'observaciones'
-        ]
-    
-    def validate_turno(self, value):
-        """Valida que el turno sea uno de los válidos"""
-        valid_turnos = ['morning', 'afternoon', 'evening']
-        if value not in valid_turnos:
-            raise serializers.ValidationError(
-                f"El turno debe ser uno de: {', '.join(valid_turnos)}"
-            )
-        return value
-    
-    def create(self, validated_data):
-        """Crea un nuevo control manual"""
-        collar_id = validated_data.pop('collar_id')
-        user = self.context['request'].user
-        
-        try:
-            bovino = Bovinos.objects.get(idCollar=collar_id)
-        except Bovinos.DoesNotExist:
-            raise serializers.ValidationError(f"No existe bovino con ID de collar: {collar_id}")
-        
-        # Verificar si ya existe un control para ese bovino, fecha y turno
-        existing = ControlManual.objects.filter(
-            id_Bovino=bovino,
-            fecha_control=validated_data['fecha_control'],
-            turno=validated_data['turno']
-        ).first()
-        
-        if existing:
-            raise serializers.ValidationError(
-                f"Ya existe un control para {bovino.nombre} en esta fecha y turno"
-            )
-        
-        control = ControlManual.objects.create(
-            id_Bovino=bovino,
-            id_User=user,
-            **validated_data
-        )
-        return control
+        read_only_fields = ['id_Control', 'estado_salud', 'fecha_registro', 'fecha_actualizacion']

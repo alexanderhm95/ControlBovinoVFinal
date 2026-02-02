@@ -9,6 +9,48 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 
 
+class Bovinos(models.Model):
+    """Información de bovinos registrados en el sistema"""
+    id_Bovinos = models.AutoField(primary_key=True)
+    idCollar = models.IntegerField(
+        'ID del Collar',
+        unique=True,
+        db_index=True
+    )
+    macCollar = models.CharField(
+        'MAC del Collar',
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text='Dirección MAC del collar sensor'
+    )
+    nombre = models.CharField(
+        'Nombre',
+        max_length=100
+    )
+    fecha_registro = models.DateField(
+        'Fecha de Registro',
+        default=timezone.now
+    )
+    activo = models.BooleanField(
+        'Activo',
+        default=True,
+        help_text='Indica si el bovino está activo en el sistema'
+    )
+    
+    class Meta:
+        verbose_name = 'Bovino'
+        verbose_name_plural = 'Bovinos'
+        ordering = ['-fecha_registro', 'nombre']
+        indexes = [
+            models.Index(fields=['idCollar']),
+            models.Index(fields=['macCollar']),
+            models.Index(fields=['-fecha_registro']),
+        ]
+
+    def __str__(self):
+        return f"{self.nombre} (Collar: {self.idCollar})"
+
 class PersonalInfo(models.Model):
     """Información personal de contacto"""
     cedula = models.CharField(
@@ -91,50 +133,6 @@ class Pulsaciones(models.Model):
         verbose_name_plural = 'Pulsaciones'
 
 
-class Bovinos(models.Model):
-    """Información de bovinos registrados en el sistema"""
-    id_Bovinos = models.AutoField(primary_key=True)
-    idCollar = models.IntegerField(
-        'ID del Collar',
-        unique=True,
-        db_index=True
-    )
-    macCollar = models.CharField(
-        'MAC del Collar',
-        max_length=100,
-        blank=True,
-        null=True,
-        unique=True,
-        help_text='Dirección MAC del collar sensor'
-    )
-    nombre = models.CharField(
-        'Nombre',
-        max_length=100
-    )
-    fecha_registro = models.DateField(
-        'Fecha de Registro',
-        default=timezone.now
-    )
-    activo = models.BooleanField(
-        'Activo',
-        default=True,
-        help_text='Indica si el bovino está activo en el sistema'
-    )
-    
-    class Meta:
-        verbose_name = 'Bovino'
-        verbose_name_plural = 'Bovinos'
-        ordering = ['-fecha_registro', 'nombre']
-        indexes = [
-            models.Index(fields=['idCollar']),
-            models.Index(fields=['macCollar']),
-            models.Index(fields=['-fecha_registro']),
-        ]
-
-    def __str__(self):
-        return f"{self.nombre} (Collar: {self.idCollar})"
-
-
 class Lectura(models.Model):
     """Lectura de sensores de bovino"""
     id_Lectura = models.AutoField(primary_key=True)
@@ -192,6 +190,12 @@ class Lectura(models.Model):
     def __str__(self):
         return f"{self.id_Lectura} - {self.id_Bovino.nombre} - {self.fecha_lectura} - {self.hora_lectura}"
 
+    def hora_lectura_guayaquil(self):
+        """Retorna la hora de lectura (ya está en zona horaria de Guayaquil)"""
+        return str(self.hora_lectura)
+    
+    hora_lectura_guayaquil.short_description = 'Hora (Guayaquil)'
+    
     @property
     def temperatura_valor(self):
         """Retorna el valor de temperatura"""
@@ -218,32 +222,56 @@ class Lectura(models.Model):
 
     @property
     def estado_salud(self):
-        """Retorna el estado general de salud"""
-        if self.temperatura_normal is None or self.pulsaciones_normales is None:
+        """Retorna el estado general de salud basado en temperatura (rangos para vacas lecheras)"""
+        temp = self.temperatura_valor
+        
+        if temp is None:
             return 'Desconocido'
         
-        if self.temperatura_normal and self.pulsaciones_normales:
-            return 'Normal'
-        elif not self.temperatura_normal and not self.pulsaciones_normales:
+        # Rangos específicos para vacas lecheras
+        if temp > 40.0:
             return 'Crítico'
-        else:
+        elif temp >= 39.0:
             return 'Alerta'
+        else:
+            return 'Normal'
 
 
 class ControlMonitoreo(models.Model):
-    """Control y seguimiento de lecturas por usuarios"""
+    """
+    Control y seguimiento de salud - Integra controles automáticos (de sensores) 
+    y controles manuales (registrados por usuario) en una única entidad
+    """
+    # Opciones de turno
+    TURNO_CHOICES = [
+        ('morning', 'Mañana (06:00 - 12:00)'),
+        ('afternoon', 'Tarde (12:00 - 18:00)'),
+        ('evening', 'Noche (18:00 - 23:59)'),
+        ('night', 'Madrugada (00:00 - 06:00)'),
+    ]
+    
+    # Opciones de estado de salud
+    ESTADO_SALUD_CHOICES = [
+        ('Normal', 'Normal (38.0-39.0°C)'),
+        ('Alerta', 'Alerta (39.0-40.0°C)'),
+        ('Crítico', 'Crítico (>40.0°C)'),
+    ]
+    
     id_Control = models.AutoField(primary_key=True)
     id_Lectura = models.ForeignKey(
         Lectura,
         on_delete=models.CASCADE,
         related_name='controles',
-        verbose_name='Lectura'
+        verbose_name='Lectura',
+        null=True,
+        blank=True,
+        help_text='Lectura automática del sensor (puede ser nula para controles puramente manuales)'
     )
     id_User = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='controles_monitoreo',
-        verbose_name='Usuario'
+        verbose_name='Usuario que registra'
     )
     fecha_lectura = models.DateField(
         'Fecha del Control',
@@ -253,6 +281,36 @@ class ControlMonitoreo(models.Model):
     hora_lectura = models.TimeField(
         'Hora del Control',
         default=timezone.now
+    )
+    turno = models.CharField(
+        'Turno',
+        max_length=10,
+        choices=TURNO_CHOICES,
+        default='morning',
+        help_text='Turno del día en que se realiza el control'
+    )
+    # Datos de medición (puede venir del sensor o ser registrado manualmente)
+    temperatura = models.FloatField(
+        'Temperatura (°C)',
+        validators=[MinValueValidator(35.0), MaxValueValidator(42.0)],
+        null=True,
+        blank=True,
+        help_text='Temperatura corporal del bovino'
+    )
+    pulsaciones = models.IntegerField(
+        'Pulsaciones (BPM)',
+        validators=[MinValueValidator(40), MaxValueValidator(150)],
+        null=True,
+        blank=True,
+        help_text='Pulsaciones por minuto del bovino'
+    )
+    estado_salud = models.CharField(
+        'Estado de Salud',
+        max_length=20,
+        choices=ESTADO_SALUD_CHOICES,
+        default='Normal',
+        db_index=True,
+        help_text='Estado de salud calculado automáticamente'
     )
     observaciones = models.TextField(
         'Observaciones',
@@ -267,109 +325,55 @@ class ControlMonitoreo(models.Model):
         null=True,
         help_text='Acción o tratamiento aplicado'
     )
+    fecha_registro = models.DateTimeField(
+        'Fecha de Registro',
+        auto_now_add=True,
+        null=True,
+        blank=True
+    )
+    fecha_actualizacion = models.DateTimeField(
+        'Fecha de Actualización',
+        auto_now=True,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'Control de Monitoreo'
         verbose_name_plural = 'Controles de Monitoreo'
         ordering = ['-fecha_lectura', '-hora_lectura']
+        unique_together = [['id_Lectura', 'turno']]  # Un control por lectura y turno
         indexes = [
             models.Index(fields=['id_User', '-fecha_lectura']),
             models.Index(fields=['-fecha_lectura', '-hora_lectura']),
+            models.Index(fields=['id_Lectura', 'turno']),
+            models.Index(fields=['-fecha_lectura', 'turno']),
         ]
 
     def __str__(self):
-        return f"{self.id_Control} - {self.id_Lectura.id_Bovino.nombre} - {self.fecha_lectura} - {self.hora_lectura}"
-
-
-class ControlManual(models.Model):
-    """Control manual de salud - 3 registros por día (mañana, tarde, noche)"""
-    TURNO_CHOICES = [
-        ('morning', 'Mañana (06:00 - 12:00)'),
-        ('afternoon', 'Tarde (12:00 - 18:00)'),
-        ('evening', 'Noche (18:00 - 23:59)'),
-    ]
-    
-    id_ControlManual = models.AutoField(primary_key=True)
-    id_Bovino = models.ForeignKey(
-        Bovinos,
-        on_delete=models.CASCADE,
-        related_name='controles_manuales',
-        verbose_name='Bovino'
-    )
-    id_User = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='controles_manuales_usuario',
-        verbose_name='Usuario que registra'
-    )
-    fecha_control = models.DateField(
-        'Fecha del Control',
-        default=timezone.now,
-        db_index=True
-    )
-    turno = models.CharField(
-        'Turno',
-        max_length=10,
-        choices=TURNO_CHOICES,
-        help_text='Turno del día en que se realiza el control'
-    )
-    temperatura = models.FloatField(
-        'Temperatura (°C)',
-        validators=[MinValueValidator(35.0), MaxValueValidator(42.0)],
-        help_text='Temperatura corporal registrada manualmente'
-    )
-    pulsaciones = models.IntegerField(
-        'Pulsaciones (BPM)',
-        validators=[MinValueValidator(40), MaxValueValidator(150)],
-        help_text='Pulsaciones por minuto registradas manualmente'
-    )
-    observaciones = models.TextField(
-        'Observaciones',
-        blank=True,
-        null=True,
-        help_text='Notas adicionales sobre el estado del bovino'
-    )
-    estado_salud = models.CharField(
-        'Estado de Salud',
-        max_length=20,
-        choices=[
-            ('Normal', 'Normal (36-39°C)'),
-            ('Alerta', 'Alerta (39-40°C)'),
-            ('Crítico', 'Crítico (>40°C)'),
-        ],
-        default='Normal',
-        db_index=True
-    )
-    fecha_registro = models.DateTimeField(
-        'Fecha de Registro',
-        auto_now_add=True
-    )
-    fecha_actualizacion = models.DateTimeField(
-        'Fecha de Actualización',
-        auto_now=True
-    )
-
-    class Meta:
-        verbose_name = 'Control Manual'
-        verbose_name_plural = 'Controles Manuales'
-        ordering = ['-fecha_control', '-turno']
-        unique_together = [['id_Bovino', 'fecha_control', 'turno']]
-        indexes = [
-            models.Index(fields=['id_Bovino', '-fecha_control']),
-            models.Index(fields=['-fecha_control', 'turno']),
-            models.Index(fields=['id_User', '-fecha_control']),
-        ]
-
-    def __str__(self):
+        bovino_nombre = self.id_Lectura.id_Bovino.nombre if self.id_Lectura else 'Sin bovino'
         turno_display = dict(self.TURNO_CHOICES).get(self.turno, self.turno)
-        return f"{self.id_Bovino.nombre} - {self.fecha_control} {turno_display} - {self.estado_salud}"
+        return f"{bovino_nombre} - {self.fecha_lectura} {turno_display} - {self.estado_salud}"
+
+    def hora_lectura_guayaquil(self):
+        """Retorna la hora de lectura (ya está en zona horaria de Guayaquil)"""
+        return str(self.hora_lectura)
+    
+    hora_lectura_guayaquil.short_description = 'Hora (Guayaquil)'
 
     def save(self, *args, **kwargs):
-        """Calcula automáticamente el estado de salud según la temperatura"""
-        if self.temperatura > 40:
-            self.estado_salud = 'Crítico'
-        elif self.temperatura >= 39:
-            self.estado_salud = 'Alerta'
-        else:
-            self.estado_salud = 'Normal'
+        """
+        Calcula automáticamente el estado de salud según la temperatura para vacas lecheras.
+        Si hay temperatura disponible (de sensor o manual), determina el estado.
+        """
+        # Si hay temperatura disponible, calcular estado_salud automáticamente
+        if self.temperatura is not None:
+            # Rangos específicos para vacas lecheras (bovinos)
+            if self.temperatura > 40.0:
+                self.estado_salud = 'Crítico'
+            elif self.temperatura >= 39.0:
+                self.estado_salud = 'Alerta'
+            else:
+                self.estado_salud = 'Normal'
+        
         super().save(*args, **kwargs)

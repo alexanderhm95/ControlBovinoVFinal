@@ -4,83 +4,67 @@ from . import views
 from temp_car.views import *
 from temp_car.user.users_views import *
 from temp_car.logs_views import *
-#from turisticos.agenda.views import 
-from django.contrib.auth import views as auth_views
 from django.urls import path
 from django.conf.urls.static import static
 
 urlpatterns = [
     ##################################
-    #Rutas de Plataforma Web
+    #Rutas del Frontend
     ##################################
     #Ruta para el Inicio de Sesion
     path('', user_login,name='login'),
-    #Ruta para el Cierre de Sesion
-    path('', user_logout, name='salir'),
-    #Rutas de gestion de datos
+    path('logout/', user_logout, name='salir'),
     path('gestion/', listar_usuario, name='gestion'),    
     path('crear_usuario/', crear_usuario, name='crear_usuario'),  
     #path('editar_usuario/<int:user_id>/', editar_usuario, name='editar_usuario'),
     path('editar_usuario/<int:user_id>/', editar_usuario, name='editar_usuario'),
     path('changeState/<int:usuario_id>/', desactivar_usuario, name='changeState'),
-
-    path('prueba/', prueba, name='prueba'),
     #Rutas para restablecer contraseña
     path('reset-password/', CustomPasswordResetView.as_view(), name='passwordReset'),
     path('reset-password/done/', ResetPasswordDoneView.as_view(), name='passwordResetDone'),
     path('reset-password/confirm/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='passwordResetConfirm'),
     path('reset-password/complete/',ResetPasswordCompleteView.as_view(), name='passwordResetComplete'),
-    
-    #Rutas del dashboard
     path('monitoreo_actual/', monitoreo_actual, name='monitoreo_actual'),
-    path('monitor/datos/<int:id_collar>/', views.dashBoardData, name='datos'),
-    path('ultimo/registro/<int:collar_id>', views.ultimoRegistro, name='ultimo_registro'),
-    #Ambas rutas trabajan juntas monitoreo y datos3
     path('reportes/', reportes, name='reportes'), 
-    path('generar_pdf/', reporte_pdf, name='generar_pdf'),
     path('temperatura/', temperatura, name='temperatura'), 
     path('frecuencia/', frecuencia, name='frecuencia'),
-       
-  
-    #Rutas para acceso al monitoreo de sensores
+    path('generar_pdf/', reporte_pdf, name='generar_pdf'),
+    path('monitor/datos/<int:id_collar>/', views.dashBoardData, name='datos'),
+    path('ultimo/registro/<int:collar_id>', views.ultimoRegistro, name='ultimo_registro'),    
+    
 
- 
     
 
     ######################################
     #Rutas de Plataforma Movil  
     ######################################
     path('api/movil/login/', LoginView1.as_view(), name='api-login'),                     # Api para el login
-    path('api/movil/datos/', views.reporte_por_id, name='datos3_por_id'),                # Api POST para registrar monitoreo
+    path('api/movil/datos/', views.registrar_datos_sensores, name='registrar_sensores'),  # Api POST para registrar datos de sensores
     path('api/movil/datos/<int:collar_id>/', views.obtener_datos_collar, name='datos_collar_get'),  # Api GET para obtener datos por collar ID
-    #path('api/movil/monitoreo/', views.obtener_datos_json3, name='datos3'),          # Api para obtener datos de los collares
-    path('api/register',apiRegister, name='registrar2'),                            #Desarrollado para pruebas
-    path('api/listar',apiList, name='listar2'),                                     #Desarrollado para pruebas
-    path('api/editar/<int:user_id>/',apiEdit, name='editar_usuario'),              #Desarrollado para pruebas
+    path('api/movil/verificar-lectura/<int:collar_id>/', views.verificar_lectura_turno, name='verificar_lectura'),  # Api GET para verificar lectura del turno
     #############################################################
     
 
     ######################################
     #Ruta para el Arduino 
     ######################################
-    path('api/arduino/monitoreo', views.lecturaDatosArduino, name='recibir_datos2'),
+    path('api/arduino/monitoreo/', views.lecturaDatosArduino, name='recibir_datos2'),
     
     ######################################
-    # CONTROLES MANUALES (3 por día: morning, afternoon, evening)
+    # CONTROLES DE MONITOREO
     ######################################
-    path('api/controles-manuales/', views.controlManualRegistro, name='control_manual_registro'),
-    path('api/controles-manuales/<int:control_id>/', views.controlManualDetalle, name='control_manual_detalle'),
+    path('api/controles-monitoreo/', views.controlMonitoreoRegistro, name='control_monitoreo_registro'),
+    path('api/controles-monitoreo/<int:control_id>/', views.controlMonitoreoDetalle, name='control_monitoreo_detalle'),
     ######################################
-
 
     ######################################
     # RUTAS PARA VISUALIZACIÓN DE LOGS
     ######################################
-    path('admin/logs/', view_logs_dashboard, name='view_logs'),
-    path('admin/logs/file/<str:filename>/', get_log_content, name='get_log_content'),
-    path('admin/logs/download/<str:filename>/', get_log_file, name='download_log'),
-    path('admin/logs/clear/<str:filename>/', clear_log_file, name='clear_log'),
-    path('admin/logs/stats/', logs_api_stats, name='logs_stats'),
+    path('logs/', view_logs_dashboard, name='view_logs'),
+    path('logs/file/<str:filename>/', get_log_content, name='get_log_content'),
+    path('logs/download/<str:filename>/', get_log_file, name='download_log'),
+    path('logs/clear/<str:filename>/', clear_log_file, name='clear_log'),
+    path('logs/stats/', logs_api_stats, name='logs_stats'),
     ######################################
 
 ]

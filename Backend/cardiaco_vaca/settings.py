@@ -28,16 +28,11 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-gse7w_va40r(70@*(*6x*
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [
-    'control-bovino-app.azurewebsites.net',
     '127.0.0.1',
     'localhost',
     '0.0.0.0',  # Dirección local
     '190.96.102.30',  # IP del servidor
     'pmonitunl.vercel.app',
-    'controlbovinovfinal-production.up.railway.app',
-    '.herokuapp.com',  # Permite todos los subdominios de Heroku
-    'control-bovino-vfinal.fly.dev',  # Fly.io
-    '.fly.dev',  # Permite todos los subdominios de Fly.io
 ] + os.environ.get('ALLOWED_HOSTS', '').split(',')
 
 # Configuración de proxy para Nginx/Gunicorn
@@ -45,10 +40,16 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 LOGIN_REDIRECT_URL = ('dashboard_redirect')
-LOGOUT_REDIRECT_URL = ('login')
+LOGOUT_REDIRECT_URL = '/'  # Ruta absoluta a la que redirige después de logout
+LOGIN_URL = '/'  # Ruta absoluta a la que redirige @login_required
 
-
+# Configuración de sesiones
 SESSION_COOKIE_AGE = 1800  # Duración de la sesión en segundos (media hora)
+SESSION_COOKIE_HTTPONLY = True  # La cookie no es accesible desde JavaScript
+SESSION_COOKIE_SECURE = False  # Cambiar a True en producción (HTTPS)
+SESSION_COOKIE_SAMESITE = 'Lax'  # Protección contra CSRF
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # La sesión expira cuando se cierra el navegador
+SESSION_SAVE_EVERY_REQUEST = True  # Guardar sesión en cada request
 
 #handler404 = 'temp_car.views.error_404_view'
 
@@ -79,13 +80,7 @@ CORS_ALLOW_HEADERS = [
 
 # Permitir el dominio de producción para CSRF
 CSRF_TRUSTED_ORIGINS = [
-    'https://control-bovino-app.azurewebsites.net',
     'https://pmonitunl.vercel.app',
-    "https://controlbovinovfinal-production.up.railway.app",
-    "https://*.onrender.com",
-    "https://*.herokuapp.com",
-    "https://control-bovino-vfinal.fly.dev",  # Fly.io
-    "https://*.fly.dev"  # Permite todos los subdominios de Fly.io
 ]
 
 #AUTH_USER_MODEL = 'temp_car.CustomUser'
@@ -99,10 +94,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'temp_car',
-    'bootstrap5',
     'corsheaders',
     'rest_framework.authtoken',
     'widget_tweaks',
+    'bootstrap5',
 ]
 
 MIDDLEWARE = [
@@ -375,11 +370,11 @@ LOGGING = {
             'propagate': False,
         },
         # Logger para base de datos
-        'django.db.backends': {
-            'handlers': ['console', 'db_file'],
-            'level': 'DEBUG' if DEBUG else 'INFO',
-            'propagate': False,
-        },
+        #'django.db.backends': {
+        #    'handlers': ['console', 'db_file'],
+        #    'level': 'DEBUG' if DEBUG else 'INFO',
+        #    'propagate': False,
+        #},
         # Logger para requests
         'django.request': {
             'handlers': ['console', 'request_file', 'error_file'],

@@ -14,6 +14,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import get_template
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from rest_framework.decorators import api_view
+
+from django.utils import timezone
+from django.urls import reverse
 
 # REST Framework imports
 from rest_framework import status
@@ -28,7 +32,7 @@ import json
 import random
 from datetime import datetime, timedelta, time
 from io import BytesIO
-
+import pytz
 # Local imports
 from .forms import PersonalInfoForm
 from .models import (
@@ -50,14 +54,63 @@ from .utils.monitorChecking import (
 )
 
 ####################################
-# VISTAS DE PLATAFORMA WEB
+# FUNCIONES HELPER
 ####################################
 
-def prueba(request):
-    """Vista de prueba para desarrollo"""
-    return render(request, 'appMonitor/dashboard/temperature.html')
+def obtener_turno_actual():
+    """
+    Función helper para obtener el turno actual y sus rangos horarios
+    
+    Returns:
+        dict: {
+            'turno_actual': str ('morning', 'afternoon', 'evening', 'night'),
+            'turno_display': str ('Mañana', 'Tarde', 'Noche', 'Madrugada'),
+            'hora_inicio': int (hora de inicio del turno),
+            'hora_fin': int (hora de fin del turno),
+            'hora_actual': int (hora actual),
+            'fecha_actual': date (fecha actual en America/Guayaquil)
+        }
+    """
+    # Obtener hora actual en zona de Guayaquil
+    tz = pytz.timezone('America/Guayaquil')
+    ahora = timezone.now().astimezone(tz)
+    hora_actual = ahora.hour
+    fecha_actual = ahora.date()
+    
+    # Determinar turno actual basado en la hora
+    if hora_actual >= 7 and hora_actual < 12:
+        turno_actual = 'morning'
+        turno_display = 'Mañana'
+        hora_inicio = 7
+        hora_fin = 12
+    elif hora_actual >= 12 and hora_actual < 18:
+        turno_actual = 'afternoon'
+        turno_display = 'Tarde'
+        hora_inicio = 12
+        hora_fin = 18
+    elif hora_actual >= 18 and hora_actual < 24:
+        turno_actual = 'evening'
+        turno_display = 'Noche'
+        hora_inicio = 18
+        hora_fin = 24
+    else:  # 0-7
+        turno_actual = 'night'
+        turno_display = 'Madrugada'
+        hora_inicio = 0
+        hora_fin = 7
+    
+    return {
+        'turno_actual': turno_actual,
+        'turno_display': turno_display,
+        'hora_inicio': hora_inicio,
+        'hora_fin': hora_fin,
+        'hora_actual': hora_actual,
+        'fecha_actual': fecha_actual
+    }
 
-
+####################################
+# VISTAS DE PLATAFORMA WEB
+####################################
 def error_404_view(request, exception):
     """Maneja errores 404 personalizados"""
     return render(request, '404.html', status=404)
@@ -94,17 +147,18 @@ def monitoreo_actual(request):
             'total_collares': 0
         })
 
+@login_required
 def dashBoardData(request, id_collar=None):
     """
     API endpoint para obtener datos del dashboard de un bovino específico
-    Retorna información del collar y las últimas 10 lecturas monitoreadas
+    Retorna información del collar y los controles de monitoreo del turno actual
     
     Args:
         request: HttpRequest
         id_collar: ID del collar a consultar
         
     Returns:
-        JsonResponse con collar_info y ultimos_registros
+        JsonResponse con collar_info y ultimos_registros del turno actual
     """
     # Validar parámetro requerido
     if id_collar is None:
@@ -122,52 +176,94 @@ def dashBoardData(request, id_collar=None):
             'detalle': f'No existe un bovino activo con el collar ID {id_collar}'
         }, status=404)
 
-    # Obtener última lectura usando related_name
-    lectura = bovino.lecturas.order_by('-fecha_lectura', '-hora_lectura').first()
+    # Obtener turno actual usando función helper
+    turno_info = obtener_turno_actual()
+    turno_actual = turno_info['turno_actual']
+    turno_display = turno_info['turno_display']
+    hora_inicio = turno_info['hora_inicio']
+    hora_fin = turno_info['hora_fin']
+    fecha_actual = turno_info['fecha_actual']
     
-    if not lectura:
-        return JsonResponse({
-            'error': 'No hay lecturas disponibles',
-            'detalle': f'El bovino {bovino.nombre} no tiene lecturas registradas'
-        }, status=404)
-
-    # Usar propiedades del modelo mejorado
-    collar_info = {
-        'idCollar': bovino.idCollar,
-        'nombre': bovino.nombre,
-        'temperatura': lectura.temperatura_valor,
-        'pulsaciones': lectura.pulsaciones_valor,
-        'estado_salud': lectura.estado_salud,
-        'temperatura_normal': lectura.temperatura_normal,
-        'pulsaciones_normales': lectura.pulsaciones_normales,
-        'fecha_registro': f"{lectura.fecha_lectura.strftime('%Y-%m-%d')} {lectura.hora_lectura.strftime('%H:%M:%S')}",
-    }
-
-    # Obtener últimas 10 lecturas monitoreadas usando select_related para optimización
-    ultimas_lecturas = (
+    # Buscar controles del turno actual de hoy
+    controles_turno_actual = (
         ControlMonitoreo.objects
-        .filter(id_Lectura__id_Bovino=bovino)
-        .select_related('id_Lectura__id_Temperatura', 'id_Lectura__id_Pulsaciones')
-        .order_by('-fecha_lectura', '-hora_lectura')[:10]
+        .filter(id_Lectura__id_Bovino=bovino, fecha_lectura=fecha_actual)
+        .select_related(
+            'id_Lectura',
+            'id_Lectura__id_Temperatura', 
+            'id_Lectura__id_Pulsaciones',
+            'id_User'
+        )
+        .order_by('-hora_lectura')
     )
+    
+    # Filtrar por rango horario del turno
+    controles_en_turno = []
+    for control in controles_turno_actual:
+        hora_control = control.hora_lectura.hour
+        if turno_actual == 'night':
+            if hora_control < 7:
+                controles_en_turno.append(control)
+        else:
+            if hora_control >= hora_inicio and hora_control < hora_fin:
+                controles_en_turno.append(control)
+    
+    # Usar datos del primer control del turno actual si existe
+    if controles_en_turno:
+        control_principal = controles_en_turno[0]
+        collar_info = {
+            'idCollar': bovino.idCollar,
+            'nombre': bovino.nombre,
+            'temperatura': control_principal.id_Lectura.temperatura_valor,
+            'pulsaciones': control_principal.id_Lectura.pulsaciones_valor,
+            'estado_salud': control_principal.id_Lectura.estado_salud,
+            'temperatura_normal': control_principal.id_Lectura.temperatura_normal,
+            'pulsaciones_normales': control_principal.id_Lectura.pulsaciones_normales,
+            'fecha_registro': f"{control_principal.fecha_lectura.strftime('%Y-%m-%d')} {control_principal.hora_lectura.strftime('%H:%M:%S')}",
+            'turno': turno_display,
+        }
+    else:
+        # Si no hay control en el turno, usar la última lectura de Arduino
+        lectura = bovino.lecturas.order_by('-fecha_lectura', '-hora_lectura').first()
+        
+        if not lectura:
+            return JsonResponse({
+                'error': 'No hay lecturas disponibles',
+                'detalle': f'El bovino {bovino.nombre} no tiene lecturas registradas'
+            }, status=404)
+        
+        collar_info = {
+            'idCollar': bovino.idCollar,
+            'nombre': bovino.nombre,
+            'temperatura': lectura.temperatura_valor,
+            'pulsaciones': lectura.pulsaciones_valor,
+            'estado_salud': lectura.estado_salud,
+            'temperatura_normal': lectura.temperatura_normal,
+            'pulsaciones_normales': lectura.pulsaciones_normales,
+            'fecha_registro': f"{lectura.fecha_lectura.strftime('%Y-%m-%d')} {lectura.hora_lectura.strftime('%H:%M:%S')}",
+            'turno': turno_display,
+        }
 
-    # Construir lista de registros
+    # Construir lista de controles del turno actual
     registros = [
         {
+            'id_control': control.id_Control,
             'temperatura': control.id_Lectura.temperatura_valor,
             'pulsaciones': control.id_Lectura.pulsaciones_valor,
             'estado_salud': control.id_Lectura.estado_salud,
-            'fecha_registro': f"{control.fecha_lectura.strftime('%Y-%m-%d')} {control.hora_lectura.strftime('%H:%M:%S')}",
-            'observaciones': control.observaciones or '',
-            'accion_tomada': control.accion_tomada or '',
+            'fecha_control': f"{control.fecha_lectura.strftime('%Y-%m-%d')} {control.hora_lectura.strftime('%H:%M:%S')}",
+            'observaciones': control.observaciones or 'Sin observaciones',
+            'accion_tomada': control.accion_tomada or 'Sin acción',
+            'registrado_por': control.id_User.get_full_name() if control.id_User else 'Sistema',
         }
-        for control in ultimas_lecturas
+        for control in controles_en_turno
     ]
 
     return JsonResponse({
         'collar_info': collar_info,
         'ultimos_registros': registros,
-        'total_registros': len(registros)
+        'total_registros': len(registros),
+        'turno_actual': turno_display
     }, status=200)
 
 
@@ -226,22 +322,28 @@ def ultimoRegistro(request, collar_id):
 def reportes(request):
     """
     Vista de reportes con paginación y filtro por fecha
-    Muestra historial de lecturas con opción de búsqueda por fecha
+    Muestra historial de CONTROLES DE MONITOREO registrados
     
     Args:
         request: HttpRequest con parámetros page y fecha_busqueda opcionales
         
     Returns:
-        Template con reportes paginados
+        Template con reportes paginados de controles
     """
     page = request.GET.get('page', 1)
     fecha_busqueda = request.GET.get('fecha_busqueda')
     fecha_busqueda_obj = None
 
-    # Obtener lecturas con optimización de consultas
+    # Obtener CONTROLES de monitoreo con optimización de consultas
     reportes_list = (
-        Lectura.objects
-        .select_related('id_Bovino', 'id_Temperatura', 'id_Pulsaciones')
+        ControlMonitoreo.objects
+        .select_related(
+            'id_Lectura',
+            'id_Lectura__id_Bovino',
+            'id_Lectura__id_Temperatura',
+            'id_Lectura__id_Pulsaciones',
+            'id_User'  # Usuario que registró el control
+        )
         .order_by('-fecha_lectura', '-hora_lectura')
     )
 
@@ -273,12 +375,24 @@ def reportes(request):
 
 def reporte_pdf(request):
     fecha_busqueda = request.GET.get('fecha_busqueda')
-    reportes = Lectura.objects.all()
+    
+    # Obtener CONTROLES de monitoreo (no lecturas)
+    reportes = (
+        ControlMonitoreo.objects
+        .select_related(
+            'id_Lectura',
+            'id_Lectura__id_Bovino',
+            'id_Lectura__id_Temperatura',
+            'id_Lectura__id_Pulsaciones',
+            'id_User'
+        )
+        .order_by('-fecha_lectura', '-hora_lectura')
+    )
 
     if fecha_busqueda:
         try:
-            fecha_busqueda = datetime.strptime(fecha_busqueda, '%Y-%m-%d').date()
-            reportes = reportes.filter(fecha_lectura__date=fecha_busqueda)
+            fecha_busqueda_obj = datetime.strptime(fecha_busqueda, '%Y-%m-%d').date()
+            reportes = reportes.filter(fecha_lectura=fecha_busqueda_obj)
         except ValueError:
             # Manejo de error si la fecha ingresada no es válida
             return HttpResponse("Fecha de búsqueda inválida.", status=400)
@@ -288,10 +402,35 @@ def reporte_pdf(request):
         'fecha_busqueda': fecha_busqueda.strftime('%Y-%m-%d') if fecha_busqueda else None,
     }
 
-    table_content = get_template('panel_tecnico_docente/reportes.html').render(context).split('<table id="tablaReportes">')[1].split('</table>')[0]
-    table_content = table_content.replace('<th>', '<th style="padding: 8px; text-align: center; background-color: #72b4fc;">')
-    table_content = table_content.replace('<td>', '<td style="padding: 8px; text-align: center; border: 1px solid #ddd;">')
-    table_html = f'<table id="tablaReportes" style="width: 80%; margin: 20px auto; border-collapse: collapse;">{table_content}</table>'
+    # Construir tabla HTML manualmente
+    table_rows = ""
+    for reporte in reportes:
+        table_rows += f"""
+        <tr>
+            <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">{reporte.id_Lectura.id_Bovino.idCollar}</td>
+            <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">{reporte.id_Lectura.id_Bovino.nombre}</td>
+            <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">{reporte.fecha_lectura.strftime('%d-%m-%Y')} {reporte.hora_lectura.strftime('%H:%M')}</td>
+            <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">{reporte.id_Lectura.id_Temperatura.valor}°C</td>
+            <td style="padding: 8px; text-align: center; border: 1px solid #ddd;">{reporte.id_Lectura.id_Pulsaciones.valor} BPM</td>
+        </tr>
+        """
+
+    table_html = f"""
+    <table id="tablaReportes" style="width: 95%; margin: 20px auto; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="padding: 8px; text-align: center; background-color: #72b4fc; border: 1px solid #ddd;">Collar</th>
+                <th style="padding: 8px; text-align: center; background-color: #72b4fc; border: 1px solid #ddd;">Nombre</th>
+                <th style="padding: 8px; text-align: center; background-color: #72b4fc; border: 1px solid #ddd;">Fecha y Hora</th>
+                <th style="padding: 8px; text-align: center; background-color: #72b4fc; border: 1px solid #ddd;">Temperatura</th>
+                <th style="padding: 8px; text-align: center; background-color: #72b4fc; border: 1px solid #ddd;">Pulsaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {table_rows if table_rows else '<tr><td colspan="5" style="padding: 8px; text-align: center;">No hay reportes disponibles</td></tr>'}
+        </tbody>
+    </table>
+    """
 
     pdf = render_to_pdf(table_html, context)
 
@@ -344,23 +483,29 @@ def render_to_pdf(html_content, context_dict={}):
 def temperatura(request):
     """
     Vista de monitoreo de temperatura corporal
-    Muestra historial de temperaturas con gráficos y análisis
+    Muestra historial de CONTROLES DE MONITOREO registrados
     SOLO DATOS DE APP MÓVIL (excluye Arduino)
     
     Args:
         request: HttpRequest con parámetro page opcional
         
     Returns:
-        Template con datos de temperatura
+        Template con datos de temperatura de controles
     """
     try:
         page = request.GET.get('page', 1)
         
-        # Optimizar consulta con select_related y filtrar solo app móvil
+        # Obtener CONTROLES de monitoreo (no lecturas) con app móvil
         reportes_list = (
-            Lectura.objects
-            .filter(fuente='app_movil')  # Solo datos de app móvil
-            .select_related('id_Bovino', 'id_Temperatura', 'id_Pulsaciones')
+            ControlMonitoreo.objects
+            .filter(id_Lectura__fuente='app_movil')  # Solo datos de app móvil
+            .select_related(
+                'id_Lectura',
+                'id_Lectura__id_Bovino',
+                'id_Lectura__id_Temperatura',
+                'id_Lectura__id_Pulsaciones',
+                'id_User'
+            )
             .order_by('-fecha_lectura', '-hora_lectura')
         )
         
@@ -388,23 +533,29 @@ def temperatura(request):
 def frecuencia(request):
     """
     Vista de monitoreo de frecuencia cardíaca (pulsaciones)
-    Muestra historial de pulsaciones con gráficos y análisis
+    Muestra historial de CONTROLES DE MONITOREO registrados
     SOLO DATOS DE APP MÓVIL (excluye Arduino)
     
     Args:
         request: HttpRequest con parámetro page opcional
         
     Returns:
-        Template con datos de frecuencia cardíaca
+        Template con datos de frecuencia cardíaca de controles
     """
     try:
         page = request.GET.get('page', 1)
         
-        # Optimizar consulta con select_related y filtrar solo app móvil
+        # Obtener CONTROLES de monitoreo (no lecturas) con app móvil
         reportes_list = (
-            Lectura.objects
-            .filter(fuente='app_movil')  # Solo datos de app móvil
-            .select_related('id_Bovino', 'id_Temperatura', 'id_Pulsaciones')
+            ControlMonitoreo.objects
+            .filter(id_Lectura__fuente='app_movil')  # Solo datos de app móvil
+            .select_related(
+                'id_Lectura',
+                'id_Lectura__id_Bovino',
+                'id_Lectura__id_Temperatura',
+                'id_Lectura__id_Pulsaciones',
+                'id_User'
+            )
             .order_by('-fecha_lectura', '-hora_lectura')
         )
         
@@ -504,6 +655,192 @@ class LoginView1(APIView):
                 'detalle': 'Error en el servidor',
                 'error': str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@csrf_exempt
+def registrar_datos_sensores(request):
+    """
+    API endpoint para registrar un control de monitoreo de una lectura existente
+    
+    POST /api/movil/datos/
+    Body: {
+        "username": "user@example.com",
+        "collar_id": 1,
+        "lectura_id": 123,  # ID de la Lectura que se vio en el modal
+        "observaciones": "Sin observaciones"
+    }
+    
+    IMPORTANTE: La Lectura debe ser del día actual
+    
+    Returns:
+        JsonResponse con confirmación de registro
+    """
+    print("\n" + "="*80)
+    print("[SENSORES] Nueva petición de registro de control")
+    print(f"[SENSORES] Método: {request.method}")
+    print("="*80)
+    
+    if request.method != 'POST':
+        print(f"[SENSORES] ❌ Método {request.method} no permitido")
+        return JsonResponse({
+            'error': 'Método no permitido',
+            'detalle': 'Use POST para esta solicitud'
+        }, status=405)
+    
+    # Obtener parámetros de JSON
+    try:
+        body = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
+        print(f"[SENSORES] Body recibido: {body}")
+        
+        if not body:
+            print("[SENSORES] ❌ Body vacío")
+            return JsonResponse({
+                'error': 'Body vacío',
+                'detalle': 'El body no puede estar vacío'
+            }, status=400)
+        
+        data = json.loads(body)
+        print(f"[SENSORES] JSON parseado: {data}")
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        print(f"[SENSORES] ❌ Error parseando JSON: {str(e)}")
+        return JsonResponse({
+            'error': 'JSON inválido',
+            'detalle': f'El body debe ser JSON válido: {str(e)}'
+        }, status=400)
+    except Exception as e:
+        print(f"[SENSORES] ❌ Error general: {str(e)}")
+        return JsonResponse({
+            'error': 'Error al procesar solicitud',
+            'detalle': str(e)
+        }, status=400)
+    
+    # Extraer parámetros
+    username = data.get('username')
+    collar_id = data.get('collar_id')
+    lectura_id = data.get('lectura_id')  # ID de la Lectura a registrar
+    observaciones = data.get('observaciones', '')
+    
+    print(f"[SENSORES] Parámetros extraídos:")
+    print(f"  - username: {username}")
+    print(f"  - collar_id: {collar_id}")
+    print(f"  - lectura_id: {lectura_id}")
+    print(f"  - observaciones: {observaciones}")
+    
+    # Validar parámetros requeridos
+    if not all([username, collar_id, lectura_id]):
+        print("[SENSORES] ❌ Parámetros incompletos")
+        return JsonResponse({
+            'error': 'Parámetros incompletos',
+            'detalle': 'Se requieren username, collar_id y lectura_id'
+        }, status=400)
+    
+    try:
+        # Validar valores numéricos
+        try:
+            lectura_id = int(lectura_id)
+            collar_id = int(collar_id)
+        except ValueError:
+            print("[SENSORES] ❌ Valores numéricos inválidos")
+            return JsonResponse({
+                'error': 'Valores inválidos',
+                'detalle': 'collar_id y lectura_id deben ser números enteros'
+            }, status=400)
+        
+        # Buscar la Lectura
+        print(f"[SENSORES] Buscando lectura con ID={lectura_id}...")
+        try:
+            lectura = Lectura.objects.get(id_Lectura=lectura_id)
+        except Lectura.DoesNotExist:
+            print(f"[SENSORES] ❌ Lectura no encontrada")
+            return JsonResponse({
+                'error': 'Lectura no encontrada',
+                'detalle': f'No existe lectura con ID {lectura_id}'
+            }, status=404)
+        
+        # VALIDACIÓN CRÍTICA: La Lectura debe ser de HOY
+        import pytz
+        tz = pytz.timezone('America/Guayaquil')
+        ahora = timezone.now().astimezone(tz)
+        fecha_actual = ahora.date()
+        
+        if lectura.fecha_lectura != fecha_actual:
+            print(f"[SENSORES] ❌ Lectura de {lectura.fecha_lectura}, se requiere lectura de {fecha_actual}")
+            return JsonResponse({
+                'error': 'Lectura desactualizada',
+                'detalle': f'La lectura es de {lectura.fecha_lectura}. Solo se aceptan lecturas de hoy ({fecha_actual})'
+            }, status=400)
+        
+        print(f"[SENSORES] ✓ Lectura encontrada: {lectura.id_Lectura} (Bovino: {lectura.id_Bovino.nombre})")
+        
+        # Verificar que el collar_id coincida
+        if lectura.id_Bovino.idCollar != collar_id:
+            print(f"[SENSORES] ❌ El collar_id ({collar_id}) no coincide con la lectura ({lectura.id_Bovino.idCollar})")
+            return JsonResponse({
+                'error': 'Collar no coincide',
+                'detalle': f'La lectura pertenece al collar {lectura.id_Bovino.idCollar}, no al {collar_id}'
+            }, status=400)
+        
+        # Buscar usuario por nombre completo o username
+        print(f"[SENSORES] Buscando usuario: {username}...")
+        user = User.objects.filter(username=username).first()
+        
+        # Si no encuentra por username, buscar por nombre completo (first_name last_name)
+        if not user:
+            nombre_partes = username.split(' ')
+            if len(nombre_partes) == 2:
+                first_name, last_name = nombre_partes
+                user = User.objects.filter(
+                    first_name__iexact=first_name,
+                    last_name__iexact=last_name
+                ).first()
+                if user:
+                    print(f"[SENSORES] ✓ Usuario encontrado por nombre: {user.first_name} {user.last_name}")
+            
+            if not user:
+                print(f"[SENSORES] ❌ Usuario no encontrado")
+                return JsonResponse({
+                    'error': 'Usuario no encontrado',
+                    'detalle': f'El usuario {username} no existe. Intenta con el email o nombre completo.'
+                }, status=404)
+        else:
+            print(f"[SENSORES] ✓ Usuario encontrado por username: {user.username}")
+        
+        # Crear ControlMonitoreo (registrar la lectura existente)
+        print(f"[SENSORES] Registrando control de monitoreo...")
+        control = ControlMonitoreo.objects.create(
+            id_Lectura=lectura,
+            id_User=user,
+            fecha_lectura=lectura.fecha_lectura,
+            hora_lectura=lectura.hora_lectura,
+            observaciones=observaciones
+        )
+        
+        print(f"[SENSORES] ✓ Control de monitoreo creado: {control.id_Control}")
+        print(f"[SENSORES] ✓ Lectura registrada: {lectura.id_Lectura}")
+        print(f"[SENSORES] ✓ Bovino: {lectura.id_Bovino.nombre}")
+        print(f"[SENSORES] ✓ Temperatura: {lectura.temperatura_valor}°C")
+        print(f"[SENSORES] ✓ Pulsaciones: {lectura.pulsaciones_valor} bpm")
+        print(f"[SENSORES] ✓ Estado: {lectura.estado_salud}")
+        
+        return JsonResponse({
+            'exito': True,
+            'mensaje': 'Control registrado correctamente',
+            'control_id': control.id_Control,
+            'lectura_id': lectura.id_Lectura,
+            'bovino_nombre': lectura.id_Bovino.nombre,
+            'temperatura': lectura.temperatura_valor,
+            'pulsaciones': lectura.pulsaciones_valor,
+            'estado_salud': lectura.estado_salud,
+            'fecha_registro': f"{lectura.fecha_lectura.strftime('%Y-%m-%d')} {lectura.hora_lectura.strftime('%H:%M:%S')}"
+        }, status=201)
+        
+    except Exception as e:
+        print(f"[SENSORES] ❌ Error general: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'error': 'Error al registrar control',
+            'detalle': str(e)
+        }, status=500)
 
 @csrf_exempt
 def reporte_por_id(request):
@@ -698,6 +1035,7 @@ def reporte_por_id(request):
             'detalle': str(e)
         }, status=500)
 
+@api_view(['GET'])
 @csrf_exempt
 def obtener_datos_collar(request, collar_id):
     """
@@ -708,24 +1046,43 @@ def obtener_datos_collar(request, collar_id):
     Returns:
         JsonResponse con datos del último registro del bovino
     """
-    if request.method != 'GET':
-        return JsonResponse({
-            'error': 'Método no permitido',
-            'detalle': 'Use GET para esta solicitud'
-        }, status=405)
+    # Obtenemos fecha actual de hoy en zona horaria de Guayaquil
+    print("\n" + "="*80)
+    print(f"[MÓVIL] Nueva petición de datos para collar_id={collar_id}")
+    print(f"[MÓVIL] Método: {request.method}")
+    print("="*80)
+    
+    # Obtener turno actual usando función helper
+    turno_info = obtener_turno_actual()
+    turno_actual = turno_info['turno_actual']
+    turno_display = turno_info['turno_display']
+    hora_inicio = turno_info['hora_inicio']
+    hora_fin = turno_info['hora_fin']
+    fecha_actual = turno_info['fecha_actual']
+    hora_actual = turno_info['hora_actual']
     
     try:
         # Buscar bovino activo por collar_id
         bovino = Bovinos.objects.filter(idCollar=collar_id, activo=True).first()
-        
         if not bovino:
             return JsonResponse({
                 'error': 'Bovino no encontrado',
                 'detalle': f'No existe un bovino activo con collar ID {collar_id}'
             }, status=404)
+        print(f"[MÓVIL] ✓ Bovino encontrado: {bovino.nombre}")
         
-        # Obtener último registro de monitoreo
-        ultimo_dato = Lectura.objects.filter(id_Bovino=bovino).order_by('-id_Lectura').first()
+        # Buscar lectura del turno actual
+        lectura_existe = Lectura.objects.filter(
+            id_Bovino=bovino,
+            fecha_lectura=fecha_actual,
+            hora_lectura__hour__gte=hora_inicio,
+            hora_lectura__hour__lt=hora_fin
+        )
+        
+        # Obtener último registro del turno actual
+        ultimo_dato = lectura_existe.order_by('-hora_lectura').first()
+        
+        print(f"[MÓVIL] Último dato obtenido: {ultimo_dato}")
         
         if not ultimo_dato:
             return JsonResponse({
@@ -733,10 +1090,14 @@ def obtener_datos_collar(request, collar_id):
                 'detalle': f'No hay registros para el bovino con collar {collar_id}'
             }, status=404)
         
+        # Obtener hora actual en zona de Guayaquil
+        tz = pytz.timezone('America/Guayaquil')
+        ahora = timezone.now().astimezone(tz)
+        print(f"[MÓVIL] Hora actual: {ahora.time()}")
+        
         # Construir respuesta
         datos = {
             'collar_id': bovino.idCollar,
-            'bovino_id': bovino.id_Bovinos,
             'nombre': bovino.nombre,
             'ultimo_registro': {
                 'id': ultimo_dato.id_Lectura,
@@ -752,241 +1113,106 @@ def obtener_datos_collar(request, collar_id):
         return JsonResponse({'datos': datos}, status=200)
         
     except Exception as e:
+        print(f"[MÓVIL] ❌ Error: {str(e)}")
         return JsonResponse({
             'error': 'Error interno del servidor',
             'detalle': str(e)
         }, status=500)
 
 @csrf_exempt
-def apiRegister(request):
+def verificar_lectura_turno(request, collar_id):
     """
-    API endpoint para registro de usuarios desde app móvil
-    Crea usuario de Django y perfil PersonalInfo
+    API endpoint GET para verificar si ya existe lectura registrada en el turno actual
     
-    POST /api/register/
-    Body: form data con cedula, telefono, nombre, apellido, email
+    GET /api/movil/verificar-lectura/<collar_id>/
     
     Returns:
-        JsonResponse con estado de creación
+        JsonResponse con estado de lectura del turno
     """
-    if request.method != 'POST':
-        return JsonResponse({
-            'error': 'Método no permitido',
-            'detalle': 'Use POST para registrar usuarios'
-        }, status=405)
+    import pytz
     
-    # Obtener datos de JSON (no form data)
-    try:
-        body = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
-        if not body:
-            return JsonResponse({
-                'error': 'Body vacío',
-                'detalle': 'El body no puede estar vacío'
-            }, status=400)
-        data = json.loads(body)
-    except (json.JSONDecodeError, UnicodeDecodeError) as e:
-        return JsonResponse({
-            'error': 'JSON inválido',
-            'detalle': f'El body debe ser JSON válido: {str(e)}'
-        }, status=400)
-    except Exception as e:
-        return JsonResponse({
-            'error': 'Error al procesar solicitud',
-            'detalle': str(e)
-        }, status=400)
-    
-    # Validar campos requeridos
-    required_fields = ['username', 'email', 'cedula', 'telefono', 'nombre', 'apellido']
-    missing_fields = [field for field in required_fields if not data.get(field)]
-    
-    if missing_fields:
-        return JsonResponse({
-            'error': 'Campos requeridos incompletos',
-            'detalle': f'Se requieren: {", ".join(missing_fields)}'
-        }, status=400)
+    # Obtenemos fecha y hora actual en zona horaria de Guayaquil
+    print("\n" + "="*80)
+    print(f"[VERIFICAR] Nueva petición de verificación para collar_id={collar_id}")
+    print(f"[VERIFICAR] Método: {request.method}")
+    print("="*80)
     
     try:
-        # Verificar si ya existe un usuario con ese email
-        if User.objects.filter(email=data['email']).exists():
+        # Buscar bovino activo
+        bovino = Bovinos.objects.filter(idCollar=collar_id, activo=True).first()
+        if not bovino:
             return JsonResponse({
-                'error': 'Email ya registrado',
-                'detalle': 'Ya existe un usuario con este email'
-            }, status=400)
-        
-        # Crear usuario de Django
-        user = get_user_model().objects.create_user(
-            username=data['username'],
-            email=data['email'],
-            password=data.get('password', data['cedula']),  # Usar contraseña o cédula por defecto
-            first_name=data['nombre'],
-            last_name=data['apellido']
-        )
-        
-        # Crear perfil PersonalInfo
-        PersonalInfo.objects.create(
-            email=data['email'],
-            cedula=data['cedula'],
-            telefono=data['telefono'],
-            nombre=data['nombre'],
-            apellido=data['apellido']
-        )
-        
-        return JsonResponse({
-            'message': 'Usuario creado exitosamente',
-            'data': {
-                'username': user.username,
-                'email': user.email,
-                'nombre': user.first_name,
-                'apellido': user.last_name
-            }
-        }, status=201)
-        
-    except Exception as e:
-        return JsonResponse({
-            'error': 'Error al crear usuario',
-            'detalle': str(e)
-        }, status=500)
-
-def apiList(request):
-    """
-    API endpoint para listar usuarios desde app móvil
-    Excluye usuarios staff y retorna información de perfil
-    
-    GET /api/users/
-    
-    Returns:
-        JsonResponse con diccionario de usuarios
-    """
-    try:
-        # Obtener solo usuarios no-staff
-        usuarios_list = User.objects.filter(is_staff=False)
-        
-        if not usuarios_list.exists():
-            return JsonResponse({
-                'error': 'Sin usuarios',
-                'detalle': 'No hay usuarios no-staff registrados'
+                'error': 'Bovino no encontrado',
+                'detalle': f'No existe bovino activo con collar {collar_id}'
             }, status=404)
         
-        usuarios = {}
+        # Obtener turno actual usando función helper
+        turno_info = obtener_turno_actual()
+        turno_actual = turno_info['turno_actual']
+        turno_display = turno_info['turno_display']
+        hora_inicio = turno_info['hora_inicio']
+        hora_fin = turno_info['hora_fin']
+        fecha_actual = turno_info['fecha_actual']
+        hora_actual = turno_info['hora_actual']
         
-        for user in usuarios_list:
-            # Buscar perfil asociado
-            profile = PersonalInfo.objects.filter(email=user.email).first()
-            
-            usuarios[user.id] = {
-                'userId': user.id,
-                'id': user.id,
-                'nombre': user.first_name or "Sin nombre",
-                'apellido': user.last_name or "Sin apellido",
-                'nombre_completo': profile.nombre_completo if profile else f"{user.first_name} {user.last_name}",
-                'email': user.email or "Sin email",
-                'cedula': profile.cedula if profile else "Sin cédula",
-                'telefono': profile.telefono if profile else "Sin teléfono",
-                'activo': user.is_active,
-                'is_staff': user.is_staff,
-            }
+        # Obtener hora actual completa para logging
+        tz = pytz.timezone('America/Guayaquil')
+        ahora = timezone.now().astimezone(tz)
+        print(f"[VERIFICAR] Hora actual: {ahora.time()}")
         
-        return JsonResponse({
-            'usuarios': usuarios,
-            'total': len(usuarios)
-        }, status=200)
+        print(f"[VERIFICAR] Turno actual: {turno_display} ({hora_inicio}:00 - {hora_fin}:00)")
+        # Buscar CONTROLES DE MONITOREO (app móvil) en el rango horario del turno actual
+        try:
+            # Buscar si hay algún CONTROL DE MONITOREO (no lectura de Arduino)
+            control_existe = ControlMonitoreo.objects.filter(
+                id_Lectura__id_Bovino=bovino,
+                fecha_lectura=fecha_actual,
+                hora_lectura__hour__gte=hora_inicio,
+                hora_lectura__hour__lt=hora_fin
+            )
+            lectura_en_turno = control_existe.count() > 0
+        except Exception as e:
+            print(f"[VERIFICAR] Error verificando control por turno: {str(e)}")
+            lectura_en_turno = False
+        
+        print(f"[VERIFICAR] Collar {collar_id} - Turno: {turno_display} - Lectura en turno: {lectura_en_turno}")
+        
+        # Construir respuesta
+        respuesta = {
+            'collar_id': bovino.idCollar,
+            'bovino_nombre': bovino.nombre,
+            'turno_actual': turno_actual,
+            'turno_display': turno_display,
+            'fecha_actual': fecha_actual.strftime('%Y-%m-%d'),
+            'hora_actual': ahora.strftime('%H:%M:%S'),
+            'lectura_registrada': lectura_en_turno,
+            'bloqueado': lectura_en_turno  # Bloquea si ya hay lectura EN ESTE TURNO
+        }
+        
+        # Obtener el último registro del bovino en el turno actual (para temperatura y pulsaciones)
+        try:
+            ultimo_registro = ControlMonitoreo.objects.filter(
+                id_Lectura__id_Bovino=bovino,
+                fecha_lectura=fecha_actual,
+                hora_lectura__hour__gte=hora_inicio,
+                hora_lectura__hour__lt=hora_fin
+            ).order_by('-fecha_lectura', '-hora_lectura').first()
+            if ultimo_registro:
+                respuesta['temperatura'] = ultimo_registro.id_Lectura.temperatura_valor
+                respuesta['pulsaciones'] = ultimo_registro.id_Lectura.pulsaciones_valor
+                respuesta['estado_salud'] = ultimo_registro.id_Lectura.estado_salud
+                respuesta['fecha_registro'] = f"{ultimo_registro.fecha_lectura} {ultimo_registro.hora_lectura}"
+        except Exception as e:
+            print(f"[VERIFICAR] Error obteniendo último registro: {str(e)}")
+        
+        return JsonResponse(respuesta, status=200)
         
     except Exception as e:
+        print(f"[VERIFICAR] Error general: {str(e)}")
         return JsonResponse({
-            'error': 'Error al obtener usuarios',
+            'error': 'Error al verificar lectura',
             'detalle': str(e)
         }, status=500)
-
-@csrf_exempt
-def apiEdit(request, user_id):
-    """
-    API endpoint para editar usuario desde app móvil
-    Actualiza tanto el User como el PersonalInfo
-    
-    POST/PUT/PATCH /api/editar/<user_id>/
-    Body: form data o JSON con campos a actualizar
-    
-    GET: Retorna los datos actuales del usuario
-    
-    Returns:
-        JsonResponse con estado de actualización
-    """
-    try:
-        user = get_object_or_404(User, id=user_id)
-        profile = get_object_or_404(PersonalInfo, email=user.email)
-    except Exception as e:
-        return JsonResponse({
-            'error': 'Usuario no encontrado',
-            'detalle': str(e)
-        }, status=404)
-
-    # Permitir GET para obtener datos del usuario
-    if request.method == 'GET':
-        return JsonResponse({
-            'data': {
-                'user_id': user.id,
-                'email': user.email,
-                'username': user.username,
-                'nombre': user.first_name,
-                'apellido': user.last_name,
-                'cedula': profile.cedula if profile.cedula else '',
-                'telefono': profile.telefono if profile.telefono else '',
-                'is_active': user.is_active
-            }
-        }, status=200)
-
-    # Aceptar POST, PUT o PATCH para edición
-    if request.method not in ['POST', 'PUT', 'PATCH']:
-        return JsonResponse({
-            'error': 'Método no permitido',
-            'detalle': 'Use POST, PUT o PATCH para editar usuarios'
-        }, status=405)
-    
-    # Intentar parsear JSON si el content-type es application/json
-    data = request.POST
-    if request.content_type and 'application/json' in request.content_type:
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return JsonResponse({
-                'error': 'JSON inválido',
-                'detalle': 'El body debe ser JSON válido'
-            }, status=400)
-    
-    form = PersonalInfoForm(data, instance=profile)
-    
-    if form.is_valid():
-        try:
-            # Guardar información personal
-            form.save()
-            
-            # Actualizar usuario de Django
-            user.email = form.cleaned_data['email']
-            user.username = form.cleaned_data['email']
-            user.first_name = form.cleaned_data['nombre']
-            user.last_name = form.cleaned_data['apellido']
-            user.save()
-            
-            return JsonResponse({
-                'message': 'Usuario actualizado correctamente',
-                'data': {
-                    'user_id': user.id,
-                    'email': user.email,
-                    'nombre_completo': profile.nombre_completo
-                }
-            }, status=200)
-            
-        except Exception as e:
-            return JsonResponse({
-                'error': 'Error al actualizar',
-                'detalle': str(e)
-            }, status=500)
-    else:
-        errors = {field: error[0] for field, error in form.errors.items()}
-        return JsonResponse({
-            'error': 'Datos de formulario inválidos',
-            'errores': errors
-        }, status=400)
 
 
 #########################################
@@ -996,6 +1222,7 @@ def apiEdit(request, user_id):
 ##########################################
 
 @csrf_exempt
+@api_view(['POST'])
 def lecturaDatosArduino(request):
     """
     API endpoint para recibir datos del dispositivo Arduino/ESP32
@@ -1020,24 +1247,13 @@ def lecturaDatosArduino(request):
     print("\n" + "="*80)
     print("[ARDUINO] Nueva petición recibida")
     print(f"[ARDUINO] Método: {request.method}")
-    print(f"[ARDUINO] Headers: {dict(request.headers)}")
-    print(f"[ARDUINO] Content-Type: {request.content_type}")
     print("="*80)
-    
-    if request.method != 'POST':
-        print(f"[ARDUINO] ❌ Método {request.method} no permitido")
-        return JsonResponse({
-            'error': 'Método no permitido',
-            'detalle': 'Use POST para enviar lecturas'
-        }, status=405)
     
     try:
         # VALIDACIÓN OBLIGATORIA DE AUTENTICACIÓN
         api_key_valida = 'sk_arduino_controlbovino_2024'
         auth_header = request.headers.get('Authorization', '')
-        
-        print(f"[ARDUINO] Validando Authorization...")
-        
+                
         if not auth_header:
             print(f"[ARDUINO] ❌ Authorization header faltante")
             return JsonResponse({
@@ -1068,84 +1284,108 @@ def lecturaDatosArduino(request):
         
         # Decodificar JSON del body
         body_text = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
-        print(f"[ARDUINO] Body recibido (raw): {body_text[:500]}..." if len(body_text) > 500 else f"[ARDUINO] Body recibido (raw): {body_text}")
+        lecturaDecoded = json.loads(body_text)
         
-        if not body_text:
-            print("[ARDUINO] ❌ Body vacío")
+        if lecturaDecoded.get('collar_id') is None or lecturaDecoded.get('temperatura') is None :
+            print(f"[ARDUINO] ❌ Parámetros requeridos faltantes")
             return JsonResponse({
-                'error': 'Body vacío',
-                'detalle': 'El body no puede estar vacío'
+                'error': 'Parámetros incompletos',
+                'detalle': 'Se requieren collar_id y temperatura en el body'
             }, status=400)
         
-        lecturaDecoded = json.loads(body_text)
-        print(f"[ARDUINO] JSON parseado: {lecturaDecoded}")
         
         # Extraer datos del JSON
         collar_id = lecturaDecoded.get('collar_id')
-        nombre_vaca = lecturaDecoded.get('nombre_vaca')
-        mac_collar = lecturaDecoded.get('mac_collar')
-        temperatura = lecturaDecoded.get('temperatura')
-        # Si no se envía pulsaciones, generar aleatoriamente (simula sensor)
-        pulsaciones = lecturaDecoded.get('pulsaciones', random.randint(41, 60))
+        Bovino = Bovinos.objects.filter(idCollar=collar_id).first()
+        if not Bovino:
+            Bovino = Bovinos()
+            Bovino.idCollar = lecturaDecoded.get('collar_id')
+            Bovino.nombre = lecturaDecoded.get('nombre_vaca')
+            Bovino.macCollar = lecturaDecoded.get('mac_collar')
+            # Asignar fecha de registro y activo con America/Guayaquil
+            import pytz
+            tz = pytz.timezone('America/Guayaquil')
+            ahora = timezone.now().astimezone(tz)
+            Bovino.fecha_registro = ahora.date()
+            Bovino.activo = True
+        else:
+            Bovino.macCollar = lecturaDecoded.get('mac_collar')
+        Bovino.save()
+        
+        
+        # Si no se envía pulsaciones, generar  pulsaciones de acuerdo al valor de temperatura (Se debe tener en cuenta que es para bovinos adultos en especial para vacas lecheras)
+        pulsaciones = lecturaDecoded.get('pulsaciones')
+        
+        if pulsaciones is None:
+            temperatura_val = lecturaDecoded.get('temperatura')
+            if temperatura_val is not None:
+                try:
+                    temperatura_int = int(temperatura_val)
+                    
+                    # RANGO FISIOLÓGICO PARA BOVINOS LECHEROS ADULTOS: Temp 38-39°C, Pulsaciones: 50-65 BPM
+                    if temperatura_int < 36:
+                        # Hipotermia - pulsaciones muy bajas
+                        pulsaciones = 35  # Bradicardia
+                        print(f"[ARDUINO] ⚠️ Hipotermia ({temperatura_int}°C) - pulsaciones bajas: {pulsaciones}")
+                    elif 36 <= temperatura_int < 38:
+                        # Temperatura baja - pulsaciones bajas
+                        pulsaciones = 40 + (temperatura_int - 36) * 5  # Rango 40-50 BPM
+                        print(f"[ARDUINO] Generando pulsaciones para temperatura baja: {pulsaciones}")
+                    elif 38 <= temperatura_int <= 39:
+                        # Rango normal para bovinos - pulsaciones normales
+                        pulsaciones = 50 + (temperatura_int - 38) * 10  # Rango 50-65 BPM
+                        print(f"[ARDUINO] Generando pulsaciones para temperatura normal (bovino): {pulsaciones}")
+                    elif 39 < temperatura_int <= 40:
+                        # Fiebre leve - pulsaciones elevadas
+                        pulsaciones = 65 + (temperatura_int - 39) * 20  # Rango 65-85 BPM
+                        print(f"[ARDUINO] Generando pulsaciones para fiebre leve: {pulsaciones}")
+                    else:
+                        # Fiebre alta (>40°C) - pulsaciones muy elevadas
+                        pulsaciones = 85 + (temperatura_int - 40) * 15  # Rango 85+
+                        print(f"[ARDUINO] Generando pulsaciones para fiebre alta: {pulsaciones}")
+                    
+                    pulsaciones = int(pulsaciones)  # Asegurar que sea entero
+                    
+                except (ValueError, TypeError):
+                    pulsaciones = 60  # Valor por defecto si hay error de conversión
+                    print(f"[ARDUINO] Error al procesar temperatura, asignando pulsaciones por defecto: {pulsaciones}")
+            else:
+                pulsaciones = 60  # Valor por defecto si no hay temperatura
+                print(f"[ARDUINO] Temperatura no proporcionada, asignando pulsaciones por defecto: {pulsaciones}")
+        else:
+            # Si se recibieron pulsaciones, convertirlas a entero
+            try:
+                pulsaciones = int(pulsaciones)
+                print(f"[ARDUINO] Pulsaciones recibidas del Arduino: {pulsaciones}")
+            except (ValueError, TypeError):
+                pulsaciones = 60
+                print(f"[ARDUINO] Error convertiendo pulsaciones, asignando valor por defecto: {pulsaciones}")
 
         # Validar que todos los datos requeridos estén presentes
         print(f"[ARDUINO] Datos extraídos:")
         print(f"  - collar_id: {collar_id}")
-        print(f"  - nombre_vaca: {nombre_vaca}")
-        print(f"  - mac_collar: {mac_collar}")
-        print(f"  - temperatura: {temperatura}")
+        print(f"  - nombre_vaca: {Bovino.nombre}")
+        print(f"  - mac_collar: {Bovino.macCollar}")
+        print(f"  - temperatura: {int(lecturaDecoded.get('temperatura'))}")
         print(f"  - pulsaciones: {pulsaciones}")
         
-        if not all([collar_id, nombre_vaca, mac_collar, temperatura]):
-            print("[ARDUINO] ❌ Datos incompletos")
-            return JsonResponse({
-                'error': 'Datos incompletos',
-                'detalle': 'Se requieren collar_id, nombre_vaca, mac_collar y temperatura',
-                'recibido': lecturaDecoded
-            }, status=400)
-        
-        # Convertir collar_id a entero (es un campo numérico en BD)
-        try:
-            collar_id = int(collar_id)
-        except (ValueError, TypeError) as e:
-            return JsonResponse({
-                'error': 'collar_id inválido',
-                'detalle': f'collar_id debe ser un número entero: {str(e)}',
-                'recibido': collar_id
-            }, status=400)
-
-        # Verificar o crear bovino
-        print(f"[ARDUINO] Buscando/creando bovino con collar_id={collar_id}...")
-        bovino, creado = Bovinos.objects.get_or_create(
-            idCollar=collar_id,
-            defaults={
-                'macCollar': mac_collar,
-                'nombre': nombre_vaca,
-                'fecha_registro': datetime.now(),
-                'activo': True
-            }
-        )
-        print(f"[ARDUINO] Bovino {'CREADO' if creado else 'ENCONTRADO'}: {bovino.nombre} (ID: {bovino.id_Bovinos})")
-        
-        # Si el bovino ya existía, actualizar su nombre si cambió
-        if not creado and bovino.nombre != nombre_vaca:
-            print(f"[ARDUINO] Actualizando nombre: {bovino.nombre} -> {nombre_vaca}")
-            bovino.nombre = nombre_vaca
-            bovino.save(update_fields=['nombre'])
-
         # Crear registros de temperatura y pulsaciones
         print(f"[ARDUINO] Creando registros de sensores...")
-        temperatura_obj = Temperatura.objects.create(valor=temperatura)
+        temperatura_obj = Temperatura.objects.create(valor=int(lecturaDecoded.get('temperatura')))
         pulsaciones_obj = Pulsaciones.objects.create(valor=pulsaciones)
         print(f"[ARDUINO] Temperatura ID: {temperatura_obj.id_Temperatura}, Pulsaciones ID: {pulsaciones_obj.id_Pulsaciones}")
         
         # Crear lectura
+        import pytz
+        tz = pytz.timezone('America/Guayaquil')
+        ahora = timezone.now().astimezone(tz)
+        
         lectura = Lectura.objects.create(
             id_Temperatura=temperatura_obj,
             id_Pulsaciones=pulsaciones_obj,
-            id_Bovino=bovino,
-            fecha_lectura=datetime.now(),
-            hora_lectura=datetime.now().time(),
+            id_Bovino=Bovino,
+            fecha_lectura=ahora.date(),
+            hora_lectura=ahora.time(),
             fuente='arduino'  # Marca como proveniente del Arduino
         )
         print(f"[ARDUINO] Lectura creada ID: {lectura.id_Lectura}")
@@ -1155,12 +1395,12 @@ def lecturaDatosArduino(request):
             'mensaje': 'Datos guardados exitosamente',
             'data': {
                 'lectura_id': lectura.id_Lectura,
-                'bovino': bovino.nombre,
-                'collar_id': bovino.idCollar,
-                'temperatura': temperatura,
+                'bovino': Bovino.nombre,
+                'collar_id': Bovino.idCollar,
+                'temperatura': int(lecturaDecoded.get('temperatura')),
                 'pulsaciones': pulsaciones,
                 'estado_salud': lectura.estado_salud,
-                'bovino_nuevo': creado,
+                'bovino_nuevo': Bovino.fecha_registro == ahora.date(),
                 'timestamp': lectura.fecha_lectura.isoformat()
             }
         }
@@ -1184,37 +1424,6 @@ def lecturaDatosArduino(request):
             'error': 'Error interno del servidor',
             'detalle': str(e)
         }, status=500)
-        print(f"[ARDUINO] Creando registros de sensores...")
-        temperatura_obj = Temperatura.objects.create(valor=temperatura)
-        pulsaciones_obj = Pulsaciones.objects.create(valor=pulsaciones)
-        print(f"[ARDUINO] Temperatura ID: {temperatura_obj.id_Temperatura}, Pulsaciones ID: {pulsaciones_obj.id_Pulsaciones}")
-        
-        # Crear lectura
-        lectura = Lectura.objects.create(
-            id_Temperatura=temperatura_obj,
-            id_Pulsaciones=pulsaciones_obj,
-            id_Bovino=bovino,
-            fecha_lectura=datetime.now(),
-            hora_lectura=datetime.now().time()
-        )
-        print(f"[ARDUINO] Lectura creada ID: {lectura.id_Lectura}")
-        print(f"[ARDUINO] Estado de salud: {lectura.estado_salud}")
-        
-        respuesta = {
-            'mensaje': 'Datos guardados exitosamente',
-            'data': {
-                'lectura_id': lectura.id_Lectura,
-                'bovino': bovino.nombre,
-                'collar_id': bovino.idCollar,
-                'temperatura': temperatura,
-                'pulsaciones': pulsaciones,
-                'estado_salud': lectura.estado_salud,
-                'bovino_nuevo': creado
-            }
-        }
-        print(f"[ARDUINO] ✅ Respuesta enviada: {respuesta}")
-        print("="*80 + "\n")
-        return JsonResponse(respuesta, status=201)
         
     except json.JSONDecodeError as e:
         print(f"[ARDUINO] ❌ Error JSON: {str(e)}")
@@ -1239,157 +1448,97 @@ def lecturaDatosArduino(request):
 # ============================================================================
 
 @csrf_exempt
-@require_http_methods(["POST", "GET"])
-def controlManualRegistro(request):
+@require_http_methods(["GET"])
+def controlMonitoreoRegistro(request):
     """
-    POST: Registra un control manual de salud para un bovino
-    GET: Obtiene los controles manuales del día actual para todos los bovinos
+    GET: Obtiene los controles de monitoreo registrados
     
     Headers requeridos:
     - Authorization: Bearer {token}
     
-    Body (POST):
-    {
-        "collar_id": 1,
-        "fecha_control": "2026-01-15",
-        "turno": "morning|afternoon|evening",
-        "temperatura": 38.5,
-        "pulsaciones": 72,
-        "observaciones": "Texto opcional"
-    }
+    Parámetros opcionales:
+    - fecha: fecha del control (formato YYYY-MM-DD, default: hoy)
+    - collar_id: filtrar por ID de collar
     """
     print("\n" + "="*80)
-    print("[CONTROL_MANUAL] Iniciando solicitud")
-    print(f"[CONTROL_MANUAL] Método: {request.method}")
-    print(f"[CONTROL_MANUAL] Usuario: {request.user}")
+    print("[CONTROL_MONITOREO] Iniciando solicitud GET")
+    print(f"[CONTROL_MONITOREO] Usuario: {request.user}")
     print("="*80 + "\n")
     
     # Validar autenticación
     if not request.user.is_authenticated:
-        print("[CONTROL_MANUAL] ❌ Usuario no autenticado")
-        return JsonResponse({
-            'error': 'No autorizado',
-            'detalle': 'Autenticación requerida'
-        }, status=401)
-    
-    if request.method == 'POST':
-        try:
-            from .serializers import ControlManualCreateSerializer
-            
-            body_text = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
-            print(f"[CONTROL_MANUAL] Body recibido: {body_text}")
-            
-            if not body_text:
-                print("[CONTROL_MANUAL] ❌ Body vacío")
-                return JsonResponse({
-                    'error': 'Body vacío',
-                    'detalle': 'El body no puede estar vacío'
-                }, status=400)
-            
-            datos = json.loads(body_text)
-            print(f"[CONTROL_MANUAL] Datos parseados: {datos}")
-            
-            # Crear control manual
-            serializer = ControlManualCreateSerializer(
-                data=datos,
-                context={'request': request}
-            )
-            
-            if serializer.is_valid():
-                control = serializer.save()
-                print(f"[CONTROL_MANUAL] ✅ Control registrado - ID: {control.id_ControlManual}")
-                
-                # Retornar datos del control creado
-                from .serializers import ControlManualSerializer
-                response_serializer = ControlManualSerializer(control)
-                
-                return JsonResponse({
-                    'id': control.id_ControlManual,
-                    'estado': 'creado',
-                    'estado_salud': control.estado_salud,
-                    'mensaje': f'Control de {control.id_Bovino.nombre} registrado exitosamente',
-                    'data': response_serializer.data
-                }, status=201)
-            else:
-                print(f"[CONTROL_MANUAL] ❌ Errores de validación: {serializer.errors}")
-                return JsonResponse({
-                    'error': 'Validación fallida',
-                    'detalle': serializer.errors
-                }, status=400)
-        
-        except Exception as e:
-            print(f"[CONTROL_MANUAL] ❌ Error: {str(e)}")
-            print(f"[CONTROL_MANUAL] Traceback: {traceback.format_exc()}")
-            return JsonResponse({
-                'error': 'Error al procesar solicitud',
-                'detalle': str(e)
-            }, status=500)
-    
-    elif request.method == 'GET':
-        try:
-            from datetime import date
-            from .serializers import ControlManualSerializer
-            
-            # Parámetros opcionales
-            fecha_control = request.GET.get('fecha', str(date.today()))
-            collar_id = request.GET.get('collar_id', None)
-            turno = request.GET.get('turno', None)
-            
-            print(f"[CONTROL_MANUAL] Filtros: fecha={fecha_control}, collar_id={collar_id}, turno={turno}")
-            
-            # Construir queryset
-            queryset = ControlManual.objects.filter(fecha_control=fecha_control)
-            
-            if collar_id:
-                queryset = queryset.filter(id_Bovino__idCollar=collar_id)
-            
-            if turno:
-                queryset = queryset.filter(turno=turno)
-            
-            serializer = ControlManualSerializer(queryset, many=True)
-            
-            print(f"[CONTROL_MANUAL] ✅ {len(serializer.data)} controles encontrados")
-            
-            return JsonResponse({
-                'total': len(serializer.data),
-                'fecha': fecha_control,
-                'controles': serializer.data
-            }, status=200)
-        
-        except Exception as e:
-            print(f"[CONTROL_MANUAL] ❌ Error: {str(e)}")
-            return JsonResponse({
-                'error': 'Error al obtener controles',
-                'detalle': str(e)
-            }, status=500)
-
-
-@csrf_exempt
-@require_http_methods(["PUT", "DELETE"])
-def controlManualDetalle(request, control_id):
-    """
-    PUT: Actualiza un control manual existente
-    DELETE: Elimina un control manual
-    
-    Solo el usuario que creó el control puede modificarlo
-    """
-    print("\n" + "="*80)
-    print(f"[CONTROL_MANUAL_DETALLE] Operación sobre control ID: {control_id}")
-    print(f"[CONTROL_MANUAL_DETALLE] Método: {request.method}")
-    print("="*80 + "\n")
-    
-    # Validar autenticación
-    if not request.user.is_authenticated:
-        print("[CONTROL_MANUAL_DETALLE] ❌ Usuario no autenticado")
+        print("[CONTROL_MONITOREO] ❌ Usuario no autenticado")
         return JsonResponse({
             'error': 'No autorizado',
             'detalle': 'Autenticación requerida'
         }, status=401)
     
     try:
-        control = ControlManual.objects.get(id_ControlManual=control_id)
-    except ControlManual.DoesNotExist:
-        print(f"[CONTROL_MANUAL_DETALLE] ❌ Control no encontrado: {control_id}")
+        from datetime import date
+        from .serializers import ControlMonitoreoSerializer
+        
+        # Parámetros opcionales
+        fecha_control = request.GET.get('fecha', str(date.today()))
+        collar_id = request.GET.get('collar_id', None)
+        
+        print(f"[CONTROL_MONITOREO] Filtros: fecha={fecha_control}, collar_id={collar_id}")
+        
+        # Construir queryset
+        queryset = ControlMonitoreo.objects.filter(
+            fecha_lectura=fecha_control
+        ).select_related(
+            'id_Lectura',
+            'id_Lectura__id_Bovino',
+            'id_User'
+        )
+        
+        if collar_id:
+            queryset = queryset.filter(id_Lectura__id_Bovino__idCollar=collar_id)
+        
+        serializer = ControlMonitoreoSerializer(queryset, many=True)
+        
+        print(f"[CONTROL_MONITOREO] ✅ {len(serializer.data)} controles encontrados")
+        
+        return JsonResponse({
+            'total': len(serializer.data),
+            'fecha': fecha_control,
+            'controles': serializer.data
+        }, status=200)
+    
+    except Exception as e:
+        print(f"[CONTROL_MONITOREO] ❌ Error: {str(e)}")
+        return JsonResponse({
+            'error': 'Error al obtener controles',
+            'detalle': str(e)
+        }, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["PUT", "DELETE"])
+def controlMonitoreoDetalle(request, control_id):
+    """
+    PUT: Actualiza un control de monitoreo existente
+    DELETE: Elimina un control de monitoreo
+    
+    Solo el usuario que creó el control puede modificarlo
+    """
+    print("\n" + "="*80)
+    print(f"[CONTROL_MONITOREO_DETALLE] Operación sobre control ID: {control_id}")
+    print(f"[CONTROL_MONITOREO_DETALLE] Método: {request.method}")
+    print("="*80 + "\n")
+    
+    # Validar autenticación
+    if not request.user.is_authenticated:
+        print("[CONTROL_MONITOREO_DETALLE] ❌ Usuario no autenticado")
+        return JsonResponse({
+            'error': 'No autorizado',
+            'detalle': 'Autenticación requerida'
+        }, status=401)
+    
+    try:
+        control = ControlMonitoreo.objects.get(id_Control=control_id)
+    except ControlMonitoreo.DoesNotExist:
+        print(f"[CONTROL_MONITOREO_DETALLE] ❌ Control no encontrado: {control_id}")
         return JsonResponse({
             'error': 'No encontrado',
             'detalle': f'Control {control_id} no existe'
@@ -1397,7 +1546,7 @@ def controlManualDetalle(request, control_id):
     
     # Verificar permisos (solo el usuario que creó puede modificar)
     if control.id_User != request.user:
-        print(f"[CONTROL_MANUAL_DETALLE] ❌ Acceso denegado - Usuario: {request.user}, Creador: {control.id_User}")
+        print(f"[CONTROL_MONITOREO_DETALLE] ❌ Acceso denegado - Usuario: {request.user}, Creador: {control.id_User}")
         return JsonResponse({
             'error': 'Acceso denegado',
             'detalle': 'Solo el usuario que creó el control puede modificarlo'
@@ -1405,37 +1554,32 @@ def controlManualDetalle(request, control_id):
     
     if request.method == 'PUT':
         try:
-            from .serializers import ControlManualSerializer
+            from .serializers import ControlMonitoreoSerializer
             
             body_text = request.body.decode('utf-8') if isinstance(request.body, bytes) else request.body
             datos = json.loads(body_text)
             
-            print(f"[CONTROL_MANUAL_DETALLE] Datos para actualización: {datos}")
+            print(f"[CONTROL_MONITOREO_DETALLE] Datos para actualización: {datos}")
             
             # Actualizar campos permitidos
-            if 'temperatura' in datos:
-                control.temperatura = datos['temperatura']
-            if 'pulsaciones' in datos:
-                control.pulsaciones = datos['pulsaciones']
             if 'observaciones' in datos:
                 control.observaciones = datos['observaciones']
-            if 'turno' in datos:
-                control.turno = datos['turno']
+            if 'accion_tomada' in datos:
+                control.accion_tomada = datos['accion_tomada']
             
             control.save()
             
-            print(f"[CONTROL_MANUAL_DETALLE] ✅ Control actualizado")
+            print(f"[CONTROL_MONITOREO_DETALLE] ✅ Control actualizado")
             
-            serializer = ControlManualSerializer(control)
+            serializer = ControlMonitoreoSerializer(control)
             return JsonResponse({
-                'id': control.id_ControlManual,
+                'id': control.id_Control,
                 'estado': 'actualizado',
-                'estado_salud': control.estado_salud,
                 'data': serializer.data
             }, status=200)
         
         except Exception as e:
-            print(f"[CONTROL_MANUAL_DETALLE] ❌ Error: {str(e)}")
+            print(f"[CONTROL_MONITOREO_DETALLE] ❌ Error: {str(e)}")
             return JsonResponse({
                 'error': 'Error al actualizar control',
                 'detalle': str(e)
@@ -1443,10 +1587,10 @@ def controlManualDetalle(request, control_id):
     
     elif request.method == 'DELETE':
         try:
-            bovino_nombre = control.id_Bovino.nombre
+            bovino_nombre = control.id_Lectura.id_Bovino.nombre
             control.delete()
             
-            print(f"[CONTROL_MANUAL_DETALLE] ✅ Control eliminado para {bovino_nombre}")
+            print(f"[CONTROL_MONITOREO_DETALLE] ✅ Control eliminado para {bovino_nombre}")
             
             return JsonResponse({
                 'estado': 'eliminado',
@@ -1454,7 +1598,7 @@ def controlManualDetalle(request, control_id):
             }, status=200)
         
         except Exception as e:
-            print(f"[CONTROL_MANUAL_DETALLE] ❌ Error al eliminar: {str(e)}")
+            print(f"[CONTROL_MONITOREO_DETALLE] ❌ Error al eliminar: {str(e)}")
             return JsonResponse({
                 'error': 'Error al eliminar control',
                 'detalle': str(e)

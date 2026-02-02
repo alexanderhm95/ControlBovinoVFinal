@@ -1,26 +1,38 @@
 """
 Vistas para visualizar y gestionar logs
+Accesibles sin necesidad de login
 """
 
 import os
 import logging
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, FileResponse
+from django.http import JsonResponse, FileResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
-from temp_car.logging_utils import get_log_files
+from pathlib import Path
 
 logger = logging.getLogger('temp_car')
 
-@login_required
+
+def get_log_files():
+    """Obtiene lista de archivos de log disponibles"""
+    logs_dir = Path('logs')
+    
+    if not logs_dir.exists():
+        return {}
+    
+    log_files = {}
+    for log_file in logs_dir.glob('*.log'):
+        log_files[log_file.name] = {
+            'path': str(log_file),
+            'size': log_file.stat().st_size,
+        }
+    
+    return log_files
+
+
 @require_http_methods(["GET"])
 def view_logs_dashboard(request):
-    """Vista del dashboard de logs"""
-    if not request.user.is_staff:
-        return JsonResponse({
-            'error': 'Acceso denegado',
-            'detalle': 'Solo los administradores pueden ver los logs'
-        }, status=403)
+    """Vista del dashboard de logs - acceso público"""
     
     try:
         log_files = get_log_files()
@@ -31,10 +43,10 @@ def view_logs_dashboard(request):
             try:
                 with open(info['path'], 'r', encoding='utf-8') as f:
                     lines = f.readlines()
-                    # Mostrar las últimas 50 líneas
+                    # Mostrar las últimas 100 líneas
                     logs_content[filename] = {
                         'total_lines': len(lines),
-                        'last_50_lines': lines[-50:] if lines else [],
+                        'last_100_lines': lines[-100:] if lines else [],
                         'size': info['size'],
                     }
             except Exception as e:
@@ -56,15 +68,9 @@ def view_logs_dashboard(request):
         }, status=500)
 
 
-@login_required
 @require_http_methods(["GET"])
-def get_log_file(request, filename):
-    """Descarga un archivo de log específico"""
-    if not request.user.is_staff:
-        return JsonResponse({
-            'error': 'Acceso denegado',
-            'detalle': 'Solo los administradores pueden descargar logs'
-        }, status=403)
+def get_log_content(request, filename):
+    """Obtiene contenido de un archivo de log específico"""
     
     try:
         log_files = get_log_files()
@@ -79,12 +85,50 @@ def get_log_file(request, filename):
         
         if not os.path.exists(file_path):
             return JsonResponse({
-                'error': 'Archivo no existe'
+                'error': 'Archivo no encontrado',
+                'path': file_path
+            }, status=404)
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return JsonResponse({
+            'filename': filename,
+            'content': content,
+            'lines': len(content.split('\n')),
+        })
+    
+    except Exception as e:
+        logger.error(f"Error al obtener contenido de log: {str(e)}")
+        return JsonResponse({
+            'error': 'Error al obtener contenido',
+            'detalle': str(e)
+        }, status=500)
+
+
+@require_http_methods(["GET"])
+def get_log_file(request, filename):
+    """Descarga un archivo de log específico"""
+    
+    try:
+        log_files = get_log_files()
+        
+        if filename not in log_files:
+            return JsonResponse({
+                'error': 'Archivo de log no encontrado',
+                'disponibles': list(log_files.keys())
+            }, status=404)
+        
+        file_path = log_files[filename]['path']
+        
+        if not os.path.exists(file_path):
+            return JsonResponse({
+                'error': 'Archivo no encontrado',
+                'path': file_path
             }, status=404)
         
         return FileResponse(
             open(file_path, 'rb'),
-            content_type='text/plain',
             as_attachment=True,
             filename=filename
         )
@@ -97,15 +141,9 @@ def get_log_file(request, filename):
         }, status=500)
 
 
-@login_required
-@require_http_methods(["GET"])
-def get_log_content(request, filename):
-    """Obtiene el contenido de un archivo de log en JSON"""
-    if not request.user.is_staff:
-        return JsonResponse({
-            'error': 'Acceso denegado',
-            'detalle': 'Solo los administradores pueden ver los logs'
-        }, status=403)
+@require_http_methods(["POST"])
+def clear_log_file(request, filename):
+    """Limpia (vacía) un archivo de log específico"""
     
     try:
         log_files = get_log_files()
@@ -117,57 +155,20 @@ def get_log_content(request, filename):
             }, status=404)
         
         file_path = log_files[filename]['path']
-        lines_to_show = int(request.GET.get('lines', 50))
         
-        with open(file_path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-        
-        return JsonResponse({
-            'filename': filename,
-            'total_lines': len(lines),
-            'size': log_files[filename]['size'],
-            'lines_requested': lines_to_show,
-            'content': ''.join(lines[-lines_to_show:]) if lines else 'No hay datos',
-            'timestamp': str(__import__('datetime').datetime.now()),
-        })
-    
-    except Exception as e:
-        logger.error(f"Error al obtener contenido de log: {str(e)}")
-        return JsonResponse({
-            'error': 'Error al obtener contenido',
-            'detalle': str(e)
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["DELETE"])
-def clear_log_file(request, filename):
-    """Limpia un archivo de log específico"""
-    if not request.user.is_staff:
-        return JsonResponse({
-            'error': 'Acceso denegado',
-            'detalle': 'Solo los administradores pueden limpiar logs'
-        }, status=403)
-    
-    try:
-        log_files = get_log_files()
-        
-        if filename not in log_files:
+        if not os.path.exists(file_path):
             return JsonResponse({
-                'error': 'Archivo de log no encontrado'
+                'error': 'Archivo no encontrado',
+                'path': file_path
             }, status=404)
         
-        file_path = log_files[filename]['path']
-        
-        # Limpiar el archivo (mantener el encabezado)
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(f"[LOGS CLEARED] {__import__('datetime').datetime.now()}\n")
-        
-        logger.info(f"Log file '{filename}' cleared by {request.user.username}")
+        # Limpiar el archivo
+        with open(file_path, 'w') as f:
+            f.write('')
         
         return JsonResponse({
-            'message': f'Archivo {filename} limpiado correctamente',
-            'timestamp': str(__import__('datetime').datetime.now()),
+            'mensaje': f'Archivo {filename} limpiado correctamente',
+            'filename': filename
         })
     
     except Exception as e:
@@ -178,53 +179,38 @@ def clear_log_file(request, filename):
         }, status=500)
 
 
-@login_required
 @require_http_methods(["GET"])
 def logs_api_stats(request):
-    """Estadísticas de los logs de APIs"""
-    if not request.user.is_staff:
-        return JsonResponse({
-            'error': 'Acceso denegado',
-            'detalle': 'Solo los administradores pueden ver estadísticas'
-        }, status=403)
+    """Obtiene estadísticas de los logs"""
     
     try:
         log_files = get_log_files()
         
         stats = {
-            'total_log_files': len(log_files),
-            'total_size_kb': sum(info['size_bytes'] for info in log_files.values()) / 1024,
-            'files': {}
+            'total_files': len(log_files),
+            'files': {},
+            'total_size': 0,
+            'timestamp': str(__import__('datetime').datetime.now()),
         }
         
-        # Estadísticas por archivo
         for filename, info in log_files.items():
-            stats['files'][filename] = {
-                'size_kb': info['size_bytes'] / 1024,
-                'size_mb': info['size_bytes'] / (1024 * 1024),
-                'path': info['path'],
-            }
-            
-            # Contar eventos por tipo
             try:
                 with open(info['path'], 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    stats['files'][filename]['stats'] = {
-                        'api_requests': content.count('API REQUEST'),
-                        'api_responses': content.count('API RESPONSE'),
-                        'api_errors': content.count('API ERROR'),
-                        'db_operations': content.count('DB OPERATION'),
-                        'login_attempts': content.count('LOGIN'),
-                        'errors': content.count('ERROR'),
-                        'warnings': content.count('WARNING'),
+                    lines = f.readlines()
+                    stats['files'][filename] = {
+                        'size': info['size'],
+                        'lines': len(lines),
+                        'size_mb': info['size'] / (1024 * 1024),
                     }
-            except:
-                stats['files'][filename]['stats'] = {'error': 'No se pudo leer'}
+                    stats['total_size'] += info['size']
+            except Exception as e:
+                stats['files'][filename] = {
+                    'error': str(e)
+                }
         
-        return JsonResponse({
-            'stats': stats,
-            'timestamp': str(__import__('datetime').datetime.now()),
-        })
+        stats['total_size_mb'] = stats['total_size'] / (1024 * 1024)
+        
+        return JsonResponse(stats)
     
     except Exception as e:
         logger.error(f"Error al obtener estadísticas: {str(e)}")

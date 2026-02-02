@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class MonitoringCard extends StatelessWidget {
   final Color textColor;
   final String monitoringMessage;
+  final String? turno;
 
   const MonitoringCard({
     required this.textColor,
     required this.monitoringMessage,
+    this.turno,
   });
 
   @override
@@ -38,6 +40,19 @@ class MonitoringCard extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            if (turno != null && turno!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'Turno: $turno',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

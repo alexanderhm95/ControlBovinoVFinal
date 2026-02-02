@@ -106,8 +106,105 @@ class ApiService {
     }
   }
 
+  /// VERIFICAR LECTURA - Verifica si ya existe lectura registrada en el turno actual
+  static Future<Map<String, dynamic>?> verificarLecturaTurno(int collarId) async {
+    try {
+      print("🔍 Verificando lectura del turno para collar: $collarId");
+      
+      final response = await http.get(
+        Uri.parse('$_baseUrl/movil/verificar-lectura/$collarId/'),
+        headers: _getHeaders(),
+      );
+
+      print("📡 Respuesta verificación: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
+        
+        if (data != null) {
+          print("✅ Datos de verificación obtenidos");
+          print("   - Lectura registrada: ${data['lectura_registrada']}");
+          print("   - Turno: ${data['turno_display']}");
+          return data;
+        } else {
+          throw Exception('Datos de verificación inválidos');
+        }
+      } else if (response.statusCode == 404) {
+        print("ℹ️ Collar no encontrado o sin datos");
+        // Retornar estado vacío para collares sin datos
+        return {
+          'collar_id': collarId,
+          'lectura_registrada': false,
+          'bloqueado': false,
+          'mensaje': 'Collar sin monitorear'
+        };
+      } else if (response.statusCode == 401) {
+        print("❌ No autorizado");
+        _authToken = null;
+        throw Exception('Sesión expirada');
+      } else {
+        throw Exception('Error al verificar: ${response.statusCode}');
+      }
+    } catch (error) {
+      print("❌ Error en verificarLecturaTurno: $error");
+      throw error;
+    }
+  }
+
+  /// REGISTRAR CONTROL - Registra un control de monitoreo de una lectura existente
+  /// Requiere que la lectura sea del día actual
+  static Future<bool> registrarControl({
+    required String username,
+    required int collarId,
+    required int lecturaId,
+    String? observaciones,
+  }) async {
+    try {
+      print("📤 Registrando control - Collar: $collarId, Lectura: $lecturaId");
+      
+      final response = await http.post(
+        Uri.parse('$_baseUrl/movil/datos/'),
+        headers: _getHeaders(),
+        body: jsonEncode({
+          'username': username,
+          'collar_id': collarId,
+          'lectura_id': lecturaId,  // ID de la Lectura existente
+          'observaciones': observaciones ?? '',
+        }),
+      );
+
+      print("📡 Respuesta registro: ${response.statusCode}");
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        print("✅ Control registrado correctamente");
+        var data = json.decode(response.body);
+        print("   - Control ID: ${data['control_id']}");
+        print("   - Lectura ID: ${data['lectura_id']}");
+        return true;
+      } else if (response.statusCode == 400) {
+        var data = json.decode(response.body);
+        print("⚠️ Error de validación: ${data['detalle']}");
+        throw Exception(data['detalle'] ?? 'Error al registrar control');
+      } else if (response.statusCode == 401) {
+        print("❌ No autorizado - Token expirado");
+        _authToken = null;
+        throw Exception('Sesión expirada');
+      } else {
+        print("❌ Error al registrar: ${response.statusCode}");
+        var data = json.decode(response.body);
+        print("   Detalle: ${data['detalle']}");
+        throw Exception(data['detalle'] ?? 'Error desconocido');
+      }
+    } catch (error) {
+      print("❌ Error en registrarControl: $error");
+      rethrow;
+    }
+  }
+
   /// ENVIAR DATOS - Envía datos de sensores desde la app móvil al backend
   /// Útil si la app móvil también tiene sensores conectados
+  /// DEPRECATED: Usar registrarControl() en su lugar
+  @Deprecated('Use registrarControl() instead')
   static Future<bool> sendSensorData({
     required String username,
     required int collarId,
