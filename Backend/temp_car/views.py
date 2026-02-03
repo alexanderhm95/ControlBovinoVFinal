@@ -630,6 +630,8 @@ class LoginView1(APIView):
                     
                     body = {
                         'username': username,
+                        'email': username,  # Agregado: enviar email
+                        'correo': personaInfo.email,  # Agregado: enviar correo alternativo
                         'Nombres': f'{primer_nombre} {primer_apellido}'.strip(),
                         'nombre_completo': personaInfo.nombre_completo,
                         'is_staff': user.is_staff,
