@@ -204,36 +204,32 @@ class ApiService {
     }
   }
 
-  /// ENVIAR DATOS - Envía datos de sensores desde la app móvil al backend
-  /// Útil si la app móvil también tiene sensores conectados
-  /// DEPRECATED: Usar registrarControl() en su lugar
-  @Deprecated('Use registrarControl() instead')
+  /// ENVIAR DATOS - Ahora funciona igual que registrarControl (envía email, collar_id, lectura_id, observaciones)
+  /// Útil si necesitas compatibilidad con el backend actual
   static Future<bool> sendSensorData({
     required String email,
     required int collarId,
-    required int temperature,
-    required int heartRate,
+    required int lecturaId,
     String? observaciones,
   }) async {
     try {
-      print("📤 Enviando datos de sensores - Collar: $collarId, Email: $email");
-      
+      print("📤 Enviando datos de sensores (modo registrarControl) - Collar: $collarId, Lectura: $lecturaId, Email: $email");
       final response = await http.post(
         Uri.parse('$_baseUrl/movil/datos/'),
         headers: _getHeaders(),
         body: jsonEncode({
           'email': email,
+          'username': email,
           'collar_id': collarId,
-          'temperatura': temperature,
-          'pulsaciones': heartRate,
+          'lectura_id': lecturaId,
           'observaciones': observaciones ?? '',
         }),
       );
 
-      print("📡 Respuesta envío: ${response.statusCode}");
+      print("📡 Respuesta envío: \\${response.statusCode}");
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        print("✅ Datos de sensores enviados correctamente");
+        print("✅ Datos enviados correctamente (modo registrarControl)");
         return true;
       } else if (response.statusCode == 401) {
         print("❌ No autorizado - Token expirado");
@@ -243,9 +239,9 @@ class ApiService {
         print("❌ Usuario no encontrado - Verifica el email");
         throw Exception('Usuario no encontrado con email: $email');
       } else {
-        print("❌ Error al enviar datos: ${response.statusCode}");
+        print("❌ Error al enviar datos: \\${response.statusCode}");
         var errorData = json.decode(response.body);
-        print("   Detalle: ${errorData['detalle']}");
+        print("   Detalle: \\${errorData['detalle']}");
         return false;
       }
     } catch (error) {
