@@ -716,7 +716,7 @@ def registrar_datos_sensores(request):
         }, status=400)
     
     # Extraer parámetros
-    username = data.get('username')
+    username = data.get('email')
     collar_id = data.get('collar_id')
     lectura_id = data.get('lectura_id')  # ID de la Lectura a registrar
     observaciones = data.get('observaciones', '')
