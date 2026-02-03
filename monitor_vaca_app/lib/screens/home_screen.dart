@@ -38,18 +38,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> startMonitoring(BuildContext context, int sensorNumber) async {
-    int countdown = 5;
+    int countdown = 59;
     Timer timer;
 
     void updateState() {
       setState(() {
         if (sensorNumber == 1) {
           isMonitoring1 = true;
-          monitoringMessage1 = 'Resultados en $countdown';
+          monitoringMessage1 = 'Resultados en $countdown segundos';
           textColor1 = Colors.black;
         } else {
           isMonitoring2 = true;
-          monitoringMessage2 = 'Resultados en $countdown';
+          monitoringMessage2 = 'Resultados en $countdown segundos';
           textColor2 = Colors.black;
         }
       });
@@ -88,8 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Nombre de la vaca: $nombreVaca');
       final registrado = datos?['registrado'] ?? false;
       print('Registrado: $registrado');
-      final username = Provider.of<UserProvider>(context, listen: false).user?.nombres ?? '';
-      print('Usuario: $username');
+      final username = Provider.of<UserProvider>(context, listen: false).user?.email ?? '';
+      print('Email de usuario: $username');
 
       _updateMonitoringMessage(sensorNumber, collarId, nombreVaca, temperatura, pulsaciones, registrado);
       
@@ -336,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // El usuario confirmó - registrar el control
       try {
         final exito = await ApiService.registrarControl(
-          username: username,
+          email: username,
           collarId: collarId,
           lecturaId: lecturaId,
           observaciones: observaciones,

@@ -154,19 +154,19 @@ class ApiService {
   /// REGISTRAR CONTROL - Registra un control de monitoreo de una lectura existente
   /// Requiere que la lectura sea del día actual
   static Future<bool> registrarControl({
-    required String username,
+    required String email,
     required int collarId,
     required int lecturaId,
     String? observaciones,
   }) async {
     try {
-      print("📤 Registrando control - Collar: $collarId, Lectura: $lecturaId");
+      print("📤 Registrando control - Collar: $collarId, Lectura: $lecturaId, Email: $email");
       
       final response = await http.post(
         Uri.parse('$_baseUrl/movil/datos/'),
         headers: _getHeaders(),
         body: jsonEncode({
-          'username': username,
+          'email': email,
           'collar_id': collarId,
           'lectura_id': lecturaId,  // ID de la Lectura existente
           'observaciones': observaciones ?? '',
@@ -189,6 +189,9 @@ class ApiService {
         print("❌ No autorizado - Token expirado");
         _authToken = null;
         throw Exception('Sesión expirada');
+      } else if (response.statusCode == 404) {
+        print("❌ Usuario no encontrado - Verifica el email: $email");
+        throw Exception('Usuario no encontrado con email: $email');
       } else {
         print("❌ Error al registrar: ${response.statusCode}");
         var data = json.decode(response.body);
@@ -206,20 +209,20 @@ class ApiService {
   /// DEPRECATED: Usar registrarControl() en su lugar
   @Deprecated('Use registrarControl() instead')
   static Future<bool> sendSensorData({
-    required String username,
+    required String email,
     required int collarId,
     required int temperature,
     required int heartRate,
     String? observaciones,
   }) async {
     try {
-      print("📤 Enviando datos de sensores - Collar: $collarId");
+      print("📤 Enviando datos de sensores - Collar: $collarId, Email: $email");
       
       final response = await http.post(
         Uri.parse('$_baseUrl/movil/datos/'),
         headers: _getHeaders(),
         body: jsonEncode({
-          'username': username,
+          'email': email,
           'collar_id': collarId,
           'temperatura': temperature,
           'pulsaciones': heartRate,
@@ -236,8 +239,13 @@ class ApiService {
         print("❌ No autorizado - Token expirado");
         _authToken = null;
         throw Exception('Sesión expirada');
+      } else if (response.statusCode == 404) {
+        print("❌ Usuario no encontrado - Verifica el email");
+        throw Exception('Usuario no encontrado con email: $email');
       } else {
         print("❌ Error al enviar datos: ${response.statusCode}");
+        var errorData = json.decode(response.body);
+        print("   Detalle: ${errorData['detalle']}");
         return false;
       }
     } catch (error) {
