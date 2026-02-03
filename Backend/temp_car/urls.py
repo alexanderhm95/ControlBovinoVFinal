@@ -49,6 +49,7 @@ urlpatterns = [
     #Ruta para el Arduino 
     ######################################
     path('api/arduino/monitoreo/', views.lecturaDatosArduino, name='recibir_datos2'),
+    path('api/arduino/monitoreo', views.lecturaDatosArduino, name='recibir_datos'),  # Sin slash final para POST sin redirección
     
     ######################################
     # CONTROLES DE MONITOREO
