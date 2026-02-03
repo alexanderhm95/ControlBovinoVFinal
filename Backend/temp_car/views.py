@@ -140,7 +140,6 @@ def monitoreo_actual(request):
         }
         return render(request, 'appMonitor/dashboard/monitor.html', context)
     except Exception as e:
-        messages.error(request, f'Error al cargar el monitoreo: {str(e)}')
         return render(request, 'appMonitor/dashboard/monitor.html', {
             'collares': [],
             'idCollar': None,
@@ -353,7 +352,7 @@ def reportes(request):
             fecha_busqueda_obj = datetime.strptime(fecha_busqueda, '%Y-%m-%d').date()
             reportes_list = reportes_list.filter(fecha_lectura=fecha_busqueda_obj)
         except ValueError:
-            messages.warning(request, 'Formato de fecha inválido. Use YYYY-MM-DD')
+            pass
 
     # Configurar paginación
     paginator = Paginator(reportes_list, 10)
@@ -516,7 +515,6 @@ def temperatura(request):
         reportes = paginator.get_page(page)
 
     except Exception as e:
-        messages.error(request, f'Error al obtener datos de temperatura: {str(e)}')
         reportes = []
         collares = []
 
@@ -570,7 +568,6 @@ def frecuencia(request):
     except EmptyPage:
         reportes = paginator.page(paginator.num_pages)
     except Exception as e:
-        messages.error(request, f'Error al obtener datos de frecuencia: {str(e)}')
         reportes = []
         collares = []
 

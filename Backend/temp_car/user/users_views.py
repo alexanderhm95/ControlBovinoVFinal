@@ -49,7 +49,6 @@ def user_login(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
-                messages.success(request, f'Bienvenido {user.first_name}!')
                 return redirect('monitoreo_actual')
             else:
                 messages.error(request, 'Esta cuenta está desactivada. Contacte al administrador.')
@@ -80,7 +79,6 @@ def user_logout(request):
     response['Pragma'] = 'no-cache'
     response['Expires'] = '0'
     
-    messages.success(request, 'Sesión cerrada exitosamente.')
     return response
 
 
@@ -146,7 +144,6 @@ def crear_usuario(request):
                     # No detener el flujo por un fallo en el correo; notificar al admin/usuario
                     messages.warning(request, f'Usuario creado pero no se pudo enviar correo: {str(e)}')
 
-                messages.success(request, 'Usuario creado exitosamente. Puede iniciar sesión.')
                 return redirect('/')
                 
             except Exception as e:
@@ -242,15 +239,13 @@ def desactivar_usuario(request, usuario_id):
         # Toggle del estado activo
         if usuario.is_active:
             usuario.is_active = False
-            messages.warning(request, f'Usuario {usuario.username} desactivado correctamente.')
         else:
             usuario.is_active = True
-            messages.success(request, f'Usuario {usuario.username} activado correctamente.')
         
         usuario.save()
         
     except Exception as e:
-        messages.error(request, f'Error al cambiar estado del usuario: {str(e)}')
+        print(f'Error al cambiar estado del usuario: {str(e)}')
     
     return redirect('gestion')
 
@@ -302,7 +297,6 @@ def editar_usuario(request, user_id):
                     user.is_staff = user_form.cleaned_data['is_staff']
                     user.save()
 
-                    messages.success(request, f'Usuario {user.username} actualizado correctamente.')
                     return redirect('gestion')
                     
                 except Exception as e:
@@ -382,11 +376,10 @@ class CustomPasswordResetView(View):
                             fail_silently=False
                         )
                     
-                    messages.success(request, 'Se ha enviado un correo con instrucciones para restablecer su contraseña.')
                     return redirect('passwordResetDone')
                     
                 except Exception as e:
-                    messages.error(request, f'Error al enviar el correo: {str(e)}')
+                    print(f'Error al enviar el correo: {str(e)}')
             else:
                 # Por seguridad, no revelamos si el email existe o no
                 messages.info(request, 'Si el correo existe en nuestro sistema, recibirá instrucciones para restablecer su contraseña.')
@@ -459,16 +452,12 @@ class CustomPasswordResetConfirmView(View):
             
             if form.is_valid():
                 form.save()
-                messages.success(
-                    request,
-                    'Tu contraseña ha sido restablecida exitosamente. Ya puedes iniciar sesión.'
-                )
                 return redirect('passwordResetComplete')
             else:
                 # Mostrar errores de validación
                 for field, errors in form.errors.items():
                     for error in errors:
-                        messages.error(request, error)
+                        print(f'Error en {field}: {error}')
             
             return render(request, self.template_name, {
                 'form': form,
