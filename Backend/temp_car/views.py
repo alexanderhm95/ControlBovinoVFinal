@@ -782,6 +782,7 @@ def registrar_datos_sensores(request):
         # Buscar usuario por nombre completo o username
         print(f"[SENSORES] Buscando usuario: {username}...")
         user = User.objects.filter(username=username).first()
+        user = User.objects.filter(email__iexact=username).first() if not user else user
         
         # Si no encuentra por username, buscar por nombre completo (first_name last_name)
         if not user:
