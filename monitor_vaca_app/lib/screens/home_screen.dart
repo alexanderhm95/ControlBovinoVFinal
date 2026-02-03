@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> startMonitoring(BuildContext context, int sensorNumber) async {
-    int countdown = 3;
+    int countdown = 59;
     Timer timer;
 
     void updateState() {
