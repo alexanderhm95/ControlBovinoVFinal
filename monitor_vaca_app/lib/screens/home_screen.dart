@@ -72,6 +72,22 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final result = await ApiService.fetchData(context, sensorNumber);
       print('Resultados: $result');
+      
+      // Verificar si la respuesta contiene un error (sin datos)
+      if (result?['error'] != null) {
+        print('Error del API: ${result?['error']}');
+        setState(() {
+          if (sensorNumber == 1) {
+            monitoringMessage1 = 'Collar 1: Sin lecturas';
+            textColor1 = Colors.orange;
+          } else {
+            monitoringMessage2 = 'Collar 2: Sin lecturas';
+            textColor2 = Colors.orange;
+          }
+        });
+        return;
+      }
+      
       final datos = result?['datos'];
       print('Datos: $datos');
       final collarId = datos?['collar_id'] ?? 0;
@@ -145,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
         username: username,
         collarId: collarId,
         lecturaId: lecturaId,
-        temperature: temperatura.toInt(),
+        temperature: temperatura,
         heartRate: pulsaciones,
         nombreVaca: nombreVaca,
         fechaRegistro: fechaRegistro,
@@ -178,11 +194,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _updateMonitoringMessage(int sensorNumber, int collarId, String nombreVaca, double temperatura, int pulsaciones, bool registrado) {
     setState(() {
+      String tempFormato = temperatura.toStringAsFixed(2);
       if (sensorNumber == 1) {
-        monitoringMessage1 = 'Collar: $nombreVaca\nTemperatura: $temperatura°C\nPulsaciones: $pulsaciones';
+        monitoringMessage1 = 'Collar: $nombreVaca\nTemperatura: $tempFormato°C\nPulsaciones: $pulsaciones';
         textColor1 = _getVitalSignColor(pulsaciones, temperatura, 40, 80, 37.0, 39.0);
       } else {
-        monitoringMessage2 = 'Collar $collarId: $nombreVaca\nTemperatura: $temperatura°C\nPulsaciones: $pulsaciones';
+        monitoringMessage2 = 'Collar $collarId: $nombreVaca\nTemperatura: $tempFormato°C\nPulsaciones: $pulsaciones';
         textColor2 = _getVitalSignColor(pulsaciones, temperatura, 60, 80, 37.0, 38.0);
       }
 
@@ -201,10 +218,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleFetchError(int sensorNumber) {
     setState(() {
       if (sensorNumber == 1) {
-        monitoringMessage1 = 'Collar 1: Error al cargar los datos desde la API';
+        monitoringMessage1 = 'Collar 1: Error al cargar datos de la api';
         textColor1 = Colors.red;
       } else {
-        monitoringMessage2 = 'Collar 2: Error al cargar los datos desde la API';
+        monitoringMessage2 = 'Collar 2: Error al cargar datos de la api';
         textColor2 = Colors.red;
       }
     });
@@ -242,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String username,
     required int collarId,
     required int lecturaId,
-    required int temperature,
+    required double temperature,
     required int heartRate,
     required String nombreVaca,
     required int sensorNumber,
@@ -294,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildDetailRow('Id Collar:', collarId.toString()),
               _buildDetailRow('Nombre Bovino:', nombreVaca),
-              _buildDetailRow('Temperatura:', '$temperature°'),
+              _buildDetailRow('Temperatura:', '${temperature.toStringAsFixed(2)}°'),
               _buildDetailRow('Pulsaciones:', heartRate.toString()),
               _buildDetailRow('Usuario:', username),
               if (fecha.isNotEmpty)
