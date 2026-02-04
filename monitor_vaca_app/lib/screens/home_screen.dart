@@ -38,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> startMonitoring(BuildContext context, int sensorNumber) async {
-    int countdown = 59;
+    int countdown = 3;
     Timer timer;
 
     void updateState() {
@@ -75,14 +75,16 @@ class _HomeScreenState extends State<HomeScreen> {
       
       // Verificar si la respuesta contiene un error (sin datos)
       if (result?['error'] != null) {
-        print('Error del API: ${result?['error']}');
+        print('✋ Error detectado, deteniendo ejecución. Error: ${result?['error']}');
         setState(() {
           if (sensorNumber == 1) {
             monitoringMessage1 = 'Collar 1: Sin lecturas';
             textColor1 = Colors.orange;
+            isMonitoring1 = false;
           } else {
             monitoringMessage2 = 'Collar 2: Sin lecturas';
             textColor2 = Colors.orange;
+            isMonitoring2 = false;
           }
         });
         return;
