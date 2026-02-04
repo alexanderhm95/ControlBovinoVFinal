@@ -12,6 +12,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   Future<void> loginUser(BuildContext context) async {
     // Si el usuario y la contraseña son correctos, se redirige a la pantalla de inicio
@@ -112,10 +113,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: mediaQuery.size.width * 0.8,
                     child: TextField(
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
                         labelText: 'Contraseña',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ),
