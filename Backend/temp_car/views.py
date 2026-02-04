@@ -1068,7 +1068,7 @@ def obtener_datos_collar(request, collar_id):
             return JsonResponse({
                 'error': 'Bovino no encontrado',
                 'detalle': f'No existe un bovino activo con collar ID {collar_id}'
-            }, status=404)
+            }, status=200)
         print(f"[MÓVIL] ✓ Bovino encontrado: {bovino.nombre}")
         
         # Buscar lectura del turno actual
@@ -1088,7 +1088,7 @@ def obtener_datos_collar(request, collar_id):
             return JsonResponse({
                 'error': 'Sin datos',
                 'detalle': f'No hay registros para el bovino con collar {collar_id}'
-            }, status=404)
+            }, status=200)
         
         # Obtener hora actual en zona de Guayaquil
         tz = pytz.timezone('America/Guayaquil')
