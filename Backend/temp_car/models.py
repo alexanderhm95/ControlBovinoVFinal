@@ -228,13 +228,20 @@ class Lectura(models.Model):
         if temp is None:
             return 'Desconocido'
         
-        # Rangos específicos para vacas lecheras
-        if temp > 40.0:
-            return 'Crítico'
-        elif temp >= 39.0:
-            return 'Alerta'
-        else:
-            return 'Normal'
+        # Rangos específicos para vacas lecheras (bovinos adultos)
+        # Normal: 38-39°C
+        # Alerta/Fiebre leve: 39-40°C
+        # Crítico: >40°C o <36°C (hipotermia)
+        if temp < 36:
+            return 'Crítico'  # Hipotermia
+        elif 36 <= temp < 38:
+            return 'Alerta'  # Temperatura baja (subclinicamente baja)
+        elif 38 <= temp <= 39:
+            return 'Normal'  # Rango normal para bovinos
+        elif 39 < temp <= 40:
+            return 'Alerta'  # Fiebre leve
+        else:  # temp > 40
+            return 'Crítico'  # Fiebre alta
 
 
 class ControlMonitoreo(models.Model):
@@ -368,12 +375,19 @@ class ControlMonitoreo(models.Model):
         """
         # Si hay temperatura disponible, calcular estado_salud automáticamente
         if self.temperatura is not None:
-            # Rangos específicos para vacas lecheras (bovinos)
-            if self.temperatura > 40.0:
-                self.estado_salud = 'Crítico'
-            elif self.temperatura >= 39.0:
-                self.estado_salud = 'Alerta'
-            else:
-                self.estado_salud = 'Normal'
+            # Rangos específicos para vacas lecheras (bovinos adultos)
+            # Normal: 38-39°C
+            # Alerta: 36-38°C o 39-40°C
+            # Crítico: <36°C (hipotermia) o >40°C (fiebre alta)
+            if self.temperatura < 36:
+                self.estado_salud = 'Crítico'  # Hipotermia
+            elif 36 <= self.temperatura < 38:
+                self.estado_salud = 'Alerta'  # Temperatura baja
+            elif 38 <= self.temperatura <= 39:
+                self.estado_salud = 'Normal'  # Rango normal
+            elif 39 < self.temperatura <= 40:
+                self.estado_salud = 'Alerta'  # Fiebre leve
+            else:  # temperatura > 40
+                self.estado_salud = 'Crítico'  # Fiebre alta
         
         super().save(*args, **kwargs)
