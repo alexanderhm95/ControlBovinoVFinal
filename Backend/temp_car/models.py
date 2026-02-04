@@ -110,7 +110,7 @@ class PersonalInfo(models.Model):
 class Temperatura(models.Model):
     """Modelo legacy de temperatura - se mantiene para compatibilidad"""
     id_Temperatura = models.AutoField(primary_key=True)
-    valor = models.IntegerField()
+    valor = models.FloatField()
 
     def __str__(self):
         return str(self.valor)
