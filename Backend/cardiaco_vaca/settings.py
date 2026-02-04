@@ -39,7 +39,12 @@ ALLOWED_HOSTS = [
 
 # Configuración de proxy para Nginx/Gunicorn
 USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PROTO = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Configuración de dominio para emails
+ALLOWED_EMAIL_DOMAIN = os.environ.get('ALLOWED_EMAIL_DOMAIN', 'pmonitunl.vercel.app')
+SITE_DOMAIN = os.environ.get('SITE_DOMAIN', 'pmonitunl.vercel.app')
 
 LOGIN_REDIRECT_URL = ('dashboard_redirect')
 LOGOUT_REDIRECT_URL = '/'  # Ruta absoluta a la que redirige después de logout
@@ -83,6 +88,7 @@ CORS_ALLOW_HEADERS = [
 # Permitir el dominio de producción para CSRF
 CSRF_TRUSTED_ORIGINS = [
     'https://pmonitunl.vercel.app',
+    'https://190.96.102.30',
 ]
 
 #API_SLASH

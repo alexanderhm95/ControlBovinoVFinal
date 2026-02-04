@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/movil/datos/', views.registrar_datos_sensores, name='registrar_sensores'),  # Api POST para registrar datos de sensores
     path('api/movil/datos/<int:collar_id>/', views.obtener_datos_collar, name='datos_collar_get'),  # Api GET para obtener datos por collar ID
     path('api/movil/verificar-lectura/<int:collar_id>/', views.verificar_lectura_turno, name='verificar_lectura'),  # Api GET para verificar lectura del turno
+    path('api/editar/<int:user_id>/', views.apiEdit, name='editar'),  # Api para editar usuario
     #############################################################
     
 

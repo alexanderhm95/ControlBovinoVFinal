@@ -1605,3 +1605,138 @@ def controlMonitoreoDetalle(request, control_id):
             }, status=500)
 
 
+# ============================================
+# API PARA EDITAR USUARIOS
+# ============================================
+
+@require_http_methods(["GET", "POST", "PUT", "PATCH"])
+@csrf_exempt
+def apiEdit(request, user_id):
+    """
+    API endpoint para editar usuario desde app móvil o frontend
+    Actualiza tanto el User como el PersonalInfo
+    
+    GET: Retorna los datos actuales del usuario
+    POST/PUT/PATCH: Actualiza los datos del usuario
+    
+    Args:
+        user_id: ID del usuario a editar
+        
+    Returns:
+        JsonResponse con estado de actualización
+    """
+    try:
+        # Obtener usuario y su perfil
+        user = get_object_or_404(User, id=user_id)
+        profile = get_object_or_404(PersonalInfo, email=user.email)
+        
+        # ============ GET: Retornar datos actuales ============
+        if request.method == 'GET':
+            return JsonResponse({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'is_staff': user.is_staff,
+                'is_active': user.is_active,
+                'profile': {
+                    'cedula': profile.cedula,
+                    'nombre': profile.nombre,
+                    'apellido': profile.apellido,
+                    'email': profile.email,
+                    'telefono': profile.telefono,
+                }
+            }, status=200)
+        
+        # ============ POST/PUT/PATCH: Actualizar datos ============
+        elif request.method in ['POST', 'PUT', 'PATCH']:
+            try:
+                # Parsear JSON del request
+                if request.content_type == 'application/json':
+                    data = json.loads(request.body)
+                else:
+                    data = request.POST.dict()
+                
+                # Actualizar datos del usuario
+                if 'email' in data:
+                    nuevo_email = data['email']
+                    # Verificar que no exista otro usuario con el mismo email
+                    if User.objects.filter(email=nuevo_email).exclude(id=user.id).exists():
+                        return JsonResponse({
+                            'error': 'Ya existe otro usuario con este correo electrónico',
+                            'campo': 'email'
+                        }, status=400)
+                    user.email = nuevo_email
+                    user.username = nuevo_email
+                
+                if 'first_name' in data:
+                    user.first_name = data['first_name']
+                
+                if 'last_name' in data:
+                    user.last_name = data['last_name']
+                
+                if 'is_staff' in data:
+                    # Solo superusuarios pueden cambiar permisos
+                    if request.user.is_superuser or request.user.is_staff:
+                        user.is_staff = data['is_staff']
+                
+                user.save()
+                
+                # Actualizar perfil de usuario
+                if 'nombre' in data:
+                    profile.nombre = data['nombre']
+                
+                if 'apellido' in data:
+                    profile.apellido = data['apellido']
+                
+                if 'cedula' in data:
+                    profile.cedula = data['cedula']
+                
+                if 'telefono' in data:
+                    profile.telefono = data['telefono']
+                
+                # Actualizar email del perfil si cambió
+                if 'email' in data:
+                    profile.email = data['email']
+                
+                profile.save()
+                
+                return JsonResponse({
+                    'estado': 'actualizado',
+                    'mensaje': 'Usuario actualizado exitosamente',
+                    'usuario': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                    }
+                }, status=200)
+                
+            except json.JSONDecodeError:
+                return JsonResponse({
+                    'error': 'JSON inválido en el request'
+                }, status=400)
+            except Exception as e:
+                return JsonResponse({
+                    'error': 'Error al actualizar usuario',
+                    'detalle': str(e)
+                }, status=500)
+    
+    except User.DoesNotExist:
+        return JsonResponse({
+            'error': 'Usuario no encontrado',
+            'user_id': user_id
+        }, status=404)
+    except PersonalInfo.DoesNotExist:
+        return JsonResponse({
+            'error': 'Perfil de usuario no encontrado'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'error': 'Error al procesar solicitud',
+            'detalle': str(e)
+        }, status=500)
+
+

@@ -316,13 +316,13 @@ Listar Usuarios
             })
             .then(response => response.json())
             .then(data => {
-                if (data.data) {
-                    document.getElementById('edit_user_id').value = data.data.user_id;
-                    document.getElementById('edit_nombre').value = data.data.nombre || '';
-                    document.getElementById('edit_apellido').value = data.data.apellido || '';
-                    document.getElementById('edit_email').value = data.data.email || '';
-                    document.getElementById('edit_cedula').value = data.data.cedula || '';
-                    document.getElementById('edit_telefono').value = data.data.telefono || '';
+                if (data && data.id) {
+                    document.getElementById('edit_user_id').value = data.id;
+                    document.getElementById('edit_nombre').value = data.profile?.nombre || data.first_name || '';
+                    document.getElementById('edit_apellido').value = data.profile?.apellido || data.last_name || '';
+                    document.getElementById('edit_email').value = data.profile?.email || data.email || '';
+                    document.getElementById('edit_cedula').value = data.profile?.cedula || '';
+                    document.getElementById('edit_telefono').value = data.profile?.telefono || '';
                     editModal.show();
                 } else {
                     showError('No se pudieron cargar los datos del usuario');
@@ -363,7 +363,7 @@ Listar Usuarios
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Guardar Cambios';
 
-                if (data.message || data.data) {
+                if (data.estado === 'actualizado' || data.message || data.data) {
                     showMessage('Usuario actualizado correctamente');
                     setTimeout(() => {
                         editModal.hide();

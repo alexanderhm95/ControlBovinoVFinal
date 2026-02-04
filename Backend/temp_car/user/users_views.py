@@ -355,14 +355,18 @@ class CustomPasswordResetView(View):
                         subject = 'Restablecimiento de contraseña - Control Bovino'
                         email_template_name = 'appMonitor/resetPassword/password_reset_email.html'
                         
+                        # Usar el dominio configurado en settings en lugar de HTTP_HOST
+                        domain = settings.SITE_DOMAIN
+                        protocol = 'https'  # Siempre usar HTTPS para enlaces de email
+                        
                         context = {
                             'email': user.email,
-                            'domain': request.META.get('HTTP_HOST', 'localhost'),
+                            'domain': domain,
                             'site_name': 'Control y Monitoreo de Constantes Fisiológicas UNL',
                             'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                             'user': user,
                             'token': default_token_generator.make_token(user),
-                            'protocol': 'https' if request.is_secure() else 'http',
+                            'protocol': protocol,
                         }
                         
                         email_content = render_to_string(email_template_name, context)
