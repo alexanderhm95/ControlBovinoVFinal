@@ -7,16 +7,12 @@ Reportes
 {% endblock %}
 
 {% block styles %}
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-    body {
-        background: linear-gradient(135deg, #ebeaea, #e0f7fa);
-        margin: 0;
-        font-family: 'Arial', sans-serif;
-    }
-
+    
     .table-responsive {
         margin-top: 20px;
-        overflow-x: auto; /* Agregar overflow-x para hacer scroll horizontal en pantallas pequeñas */
+        overflow-x: auto;
     }
 
     .table thead th {
@@ -92,9 +88,7 @@ Reportes
 
     .titulo-amarillo h1 {
         color: #7b83f5;
-        
         padding: 10px;
-        
     }
 
     .btn-primary {
@@ -102,11 +96,6 @@ Reportes
         border: none;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         transition: background 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .btn-primary:hover {
-        background-color:  #004080;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
     }
 
     .boton-descargar {
@@ -144,106 +133,68 @@ Reportes
             overflow-x: auto;
         }
         .table {
-            font-size: 0.9rem; /* Reducir tamaño de fuente para dispositivos pequeños */
+            font-size: 0.9rem;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-sm h-100">
-    <div class="row d-flex align-content-center justify-content-center h-100">
-        <!-- Columna del 30% con carrusel -->
-        
-        <!-- Columna del 70% -->
-        <div class="col-md-12 rounded-2 py-4 bg-white">
-            <div class="row">
-                <div class="col-12">
-                    <div class="titulo-amarillo">
-                        <h1 class="text-center mb-4">
-                            Reporte de monitoreos al Ganado Bovino Lechero
-                        </h1>
+<div class="w-full h-full overflow-hidden flex  justify-center ">
+    <div class="flex items-center justify-center h-[50%] w-[80%] rounded-2 py-4 bg-white shadow-lg mt-[10rem]">
+        <div class="w-full rounded-2xl py-8 bg-white shadow-lg flex flex-col items-center justify-center">
+            <div class="w-full flex flex-col items-center justify-center">
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold text-indigo-500">
+                        Reporte de monitoreos al Ganado Bovino Lechero
+                    </h1>
+                </div>
+
+                <!-- Formulario de búsqueda por fecha -->
+                <div class="w-[80%] flex items-center justify-between mb-8 bg-gray-100 p-4 rounded-lg shadow-md">
+                    <div class="flex items-center gap-2">
+                        <form method="get" action="" class="flex gap-2">
+                            <input id="fecha" class="form-control border border-gray-300 rounded-lg px-4 py-2" type="date" name="fecha_busqueda" value="{{ fecha_busqueda }}">
+                            <button id="buscarBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition ease-in-out duration-300 shadow-md hover:shadow-lg" type="submit">
+                                <i class="bi bi-search"></i> Buscar
+                            </button>
+                        </form>
                     </div>
-                    <!-- Formulario de búsqueda por fecha -->
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <div id="formBusqueda" class="text-center">
-                                <form method="get" action="">
-                                    <input id="fecha" class="form-control mb-2" type="date" placeholder="Seleccionar fecha" name="fecha_busqueda" value="{{ fecha_busqueda }}">
-                                    <button id="buscarBtn" class="btn btn-primary mb-2" type="submit">
-                                        <i class="bi bi-search"></i> Buscar
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
+                    <a href="{% url 'generar_pdf' %}" class="bg-red-400 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition ease-in-out duration-300 shadow-md hover:shadow-lg flex items-center gap-2">
+                        <i class="fa fa-file-pdf"></i> Descargar PDF
+                    </a>
+                </div>
 
-                    <!-- Tabla de Reportes -->
-                    <div class="row justify-content-center">
-                        <div class="col-md-10">
-                            <div id="tablaContainer" class="table-responsive">
-                                <table class="table table-bordered table-hover">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Collar</th>
-                                            <th>Nombre</th>
-                                            <th>Fecha de Creación</th>
-                                            <th>Temperatura</th>
-                                            <th>Pulsaciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for reporte in reportes %}
-                                        <tr>
-                                            <td>{{ reporte.id_Lectura.id_Bovino.idCollar }}</td>
-                                            <td>{{ reporte.id_Lectura.id_Bovino.nombre }}</td>
-                                            <td>{{ reporte.fecha_lectura|date:"d-m-Y" }} {{ reporte.hora_lectura|time:"H:i" }}</td>
-                                            <td>{{ reporte.id_Lectura.id_Temperatura.valor }}°C</td>
-                                            <td>{{ reporte.id_Lectura.id_Pulsaciones.valor }} BPM</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- Botón para descargar PDF -->
-                            <div class="text-center mt-3">
-                                <a href="{% url 'generar_pdf' %}" class="btn btn-primary boton-descargar">
-                                    Descargar PDF
-                                </a>
-                            </div>
-
-                            <!-- Paginación -->
-                            <nav aria-label="Page navigation">
-                                <ul class="pagination justify-content-center mt-3">
-                                    {% if reportes.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=1">&laquo; Primera</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ reportes.previous_page_number }}">Anterior</a>
-                                    </li>
-                                    {% endif %}
-
-                                    <li class="page-item disabled">
-                                        <span class="page-link">
-                                            Página {{ reportes.number }} de {{ reportes.paginator.num_pages }}.
-                                        </span>
-                                    </li>
-
-                                    {% if reportes.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ reportes.next_page_number }}">Próximo</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ reportes.paginator.num_pages }}">Último &raquo;</a>
-                                    </li>
-                                    {% endif %}
-                                </ul>
-                            </nav>
-                        </div>
+                <!-- Tabla de Reportes -->
+                <div class="flex justify-center w-full">
+                    <div class="w-full max-w-4xl overflow-x-auto">
+                        <table class="w-full border-collapse border border-gray-300">
+                            <thead class="bg-gradient-to-r from-blue-500 to-blue-700 text-white">
+                                <tr>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Collar</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Nombre</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Fecha de Creación</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Temperatura</th>
+                                    <th class="border border-gray-300 px-4 py-2 text-left">Pulsaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reporte in reportes %}
+                                <tr class="hover:bg-gray-100 transition ease-in-out duration-150">
+                                    <td class="border border-gray-300 px-4 py-2">{{ reporte.id_Lectura.id_Bovino.idCollar }}</td>
+                                    <td class="border border-gray-300 px-4 py-2">{{ reporte.id_Lectura.id_Bovino.nombre }}</td>
+                                    <td class="border border-gray-300 px-4 py-2">{{ reporte.fecha_lectura|date:"d-m-Y" }} {{ reporte.hora_lectura|time:"H:i" }}</td>
+                                    <td class="border border-gray-300 px-4 py-2">{{ reporte.id_Lectura.id_Temperatura.valor }}°C</td>
+                                    <td class="border border-gray-300 px-4 py-2">{{ reporte.id_Lectura.id_Pulsaciones.valor }} BPM</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+
+
+                
             </div>
         </div>
     </div>

@@ -8,246 +8,174 @@ Monitoreo
 
 {% block styles %}
 <style>
-    body {
-        background: linear-gradient(135deg, #ebeaea, #e0f7fa);
-        margin: 0;
-        font-family: 'Arial', sans-serif;
+    .carousel-wrapper {
+        position: relative;
     }
 
-    .container-fluid {
-        padding: 0;
-    }
-
-    .table-responsive {
-        margin-top: 30px;
-    }
-
-    .table thead th {
-        background: linear-gradient(135deg, #4e73df, #4c69c0);
-        color: #ffffff;
-        font-weight: bold;
-        text-align: center;
-        border: none;
-    }
-
-    .table tbody td {
-        background: #ffffff;
-        color: #212529;
-        border: 1px solid #dee2e6;
-        text-align: center;
-    }
-
-    .badge-admin {
-        width: 25px;
-        height: 25px;
-        border-radius: 50%;
-        display: inline-block;
-    }
-
-    #badge-success {
-        background: linear-gradient(135deg, #28a745, #218838);
-    }
-
-    #badge-info {
-        background: linear-gradient(135deg, #17a2b8, #117a8b);
-    }
-
-    .user-info {
-        display: flex;
-        align-items: center;
-    }
-
-    .user-info img {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        border: 3px solid #57a0ee;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        transition: transform 0.3s ease;
-    }
-
-    .user-info img:hover {
-        transform: scale(1.1);
-    }
-
-    .user-info .ms-3 {
-        margin-left: 15px;
-    }
-
-    .fw-bold {
-        font-weight: bold;
-    }
-
-    .text-muted {
-        color: #6c757d !important;
-    }
-
-    .card-container {
-        display: none;
+    .carousel-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
     }
 
     .carousel-item {
-        transition: transform 0.5s ease-in-out;
-        animation: fadeIn 0.5s ease-in-out;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 1s ease-in-out, visibility 1s ease-in-out;
+    }
+
+    .carousel-item.active {
+        opacity: 1;
+        visibility: visible;
     }
 
     @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     .carousel-control-prev,
     .carousel-control-next {
-        width: 3%;
+        position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.5);
-        border: none;
+        width: 50px;
+        height: 50px;
+        border: none !important;
         border-radius: 50%;
+        z-index: 50;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .carousel-control-prev {
+        left: 20px;
+    }
+
+    .carousel-control-next {
+        right: 20px;
+    }
+
+    .carousel-control-prev:hover,
+    .carousel-control-next:hover {
+        transform: translateY(-50%) scale(1.1);
     }
 
     .carousel-control-prev-icon,
     .carousel-control-next-icon {
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 50%;
-        background-size: 1em;
-        /* Ajusta el tamaño según sea necesario */
-        background-repeat: no-repeat;
-        background-position: center;
-        /* Centra la imagen en el botón */
-        width: 2em;
-        /* Ajusta el tamaño del botón */
-        height: 2em;
-        /* Ajusta el tamaño del botón */
+        background-image: none !important;
     }
 
     .carousel-control-prev-icon {
-        background-image: url('../../../static/assets/img/caret-left-fill.svg');
+        background-image: url('../../../static/assets/img/caret-left-fill.svg') !important;
     }
 
     .carousel-control-next-icon {
-        background-image: url('../../../static/assets/img/caret-right-fill.svg');
+        background-image: url('../../../static/assets/img/caret-right-fill.svg') !important;
     }
 
-
-    .carousel-indicators {
-        bottom: 10px;
-    }
-
-    .carousel-indicators li {
-        background-color: #76afec;
-    }
-
-    .chart-canvas {
-        background: #ffffff;
-        border: 1px solid #e0e0e0;
+    .spinner-overlay {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
         border-radius: 12px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        transition: box-shadow 0.3s ease;
     }
 
-    .chart-canvas:hover {
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    .spinner-overlay.active {
+        display: flex;
     }
 
-    .card {
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        transition: box-shadow 0.3s ease;
-        background: #ffffff;
+    .spinner {
+        border: 4px solid #395897;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
     }
 
-    .card:hover {
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-title {
-        color: #007bff;
-    }
-
-    .container-sm {
-        max-width: 90%;
-        margin: 0 auto;
-        padding: 20px;
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    @media (max-width: 768px) {
-        .table-responsive {
-            display: none;
-        }
-
-        .card-container {
-            display: block;
-        }
-    }
-
-    .chart-container {
-        margin-bottom: 40px; /* Ajusta el valor para obtener el espacio deseado */
-        padding: 20px;
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-sm h-100">
-    <div class="row d-flex align-items-center justify-content-center h-100">
-        <div class="col-md-12 rounded-3 py-4 bg-white" style="height: 80vh;">
-            <div class="row h-100">
-                <div class="col-12">
-                    <div id="carouselExampleControls" class="carousel slide h-100" data-bs-ride="carousel">
-                        <div class="carousel-inner h-100">
-                            {% for collar in collares %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %} h-100">
-                                <div class="row d-flex justify-content-center align-items-start mx-4"
-                                    style="height: 30%;">
-                                    <div class="col-12">
-                                        <p id="datos-concurrentes-{{ collar.idCollar }}" class="datos-concurrentes"
-                                            data-id="{{ collar.idCollar }}">
-                                            <!-- En este bloque se mostrarán los datos obtenidos con ajax de manera concurrente -->
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="row d-flex justify-content-center align-items-center mx-4"
-                                    style="height: 70%;">
-                                    <div class="col-12 h-75" style=" margin-bottom: 40px;">
-                                        <canvas id="myChart{{ collar.idCollar }}" class="chart-canvas rounded-3" style="padding: 20px;" ></canvas>
+<div class="w-full h-full flex items-center justify-center -mt-10 ">
+    <div class="w-full h-[80vh] bg-white rounded-2xl shadow-lg" style="max-width: 95%;">
+        <div class="w-full h-full flex flex-col">
+            <div class="carousel-wrapper w-full h-full rounded-2xl relative overflow-visible" 
+                x-data="monitorApp([
+                    {% for collar in collares %}
+                    { idCollar: '{{ collar.idCollar }}', nombre: '{{ collar.nombre }}' }{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ])" 
+                @alpine:init="init()">
+                <div class="carousel-inner w-full h-full">
+                    <template x-for="(collar, index) in collares" :key="collar.idCollar">
+                        <div class="carousel-item w-full h-full flex flex-col" :class="{ 'active': index === currentIndex }">
+                            <!-- Sección superior: datos del collar -->
+                            <div class="flex justify-center items-start px-2 py-2 w-full " >
+                                <div class="w-full">
+                                    <div class="datos-concurrentes w-full flex  justify-center " :data-id="collar.idCollar">
+                                        <div x-show="!loadingData[collar.idCollar]" class="bg-white w-[25%] border-2 border-blue-500 rounded-lg  shadow-md p-2">
+                                            <h3 class="text-center text-[1rem] font-bold text-blue-600 mb-2">Último registro del collar <span x-text="collar.idCollar"></span></h3>
+                                            <div class="text-left space-y-1 pl-2">
+                                                <p class="text-gray-700"><span class="font-semibold">Nombre:</span> <span x-text="collareData[collar.idCollar]?.nombre || '-'"></span></p>
+                                                <p class="text-gray-700"><span class="font-semibold">Temperatura:</span> <span x-text="collareData[collar.idCollar]?.temperatura || '-'"></span>°C</p>
+                                                <p class="text-gray-700"><span class="font-semibold">Pulsaciones:</span> <span x-text="collareData[collar.idCollar]?.pulsaciones || '-'"></span> bpm</p>
+                                                <p class="text-gray-700 "><span class="font-semibold">Fecha:</span> <span x-text="collareData[collar.idCollar]?.fecha_registro || '-'"></span></p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            {% endfor %}
+
+                            <!-- Sección inferior: gráfico -->
+                            <div class="flex justify-center items-center px-8 mt-2  w-full h-[100%]" >
+                                <div class="w-full h-[100%] ">
+                                    <div class="spinner-overlay" :class="{ 'active': showSpinner[collar.idCollar] }">
+                                        <div class="spinner"></div>
+                                    </div>
+                                    <div :data-chart-id="collar.idCollar" class="w-full h-full flex justify-center items-center" >
+                                        <!-- SVG se genera aquí -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls"
-                            data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
+                    </template>
+                </div>
+
+                <!-- Botones de navegación -->
+                <button class="carousel-control-prev" type="button" @click="previous()">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="carousel-control-next" type="button" @click="next()">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+
+                <!-- Indicadores -->
+                <div class="carousel-indicators flex justify-center items-center gap-2 pb-4">
+                    <template x-for="(collar, index) in collares" :key="collar.idCollar">
+                        <button type="button" @click="goToSlide(index)"
+                            :class="{ 'active': index === currentIndex }" 
+                            :aria-current="index === currentIndex"
+                            :aria-label="'Slide ' + (index + 1)">
                         </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls"
-                            data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                        <div class="carousel-indicators">
-                            {% for collar in collares %}
-                            <button type="button" data-bs-target="#carouselExampleControls"
-                                data-bs-slide-to="{{ forloop.counter0 }}"
-                                class="{% if forloop.first %}active{% endif %}"
-                                aria-current="{% if forloop.first %}true{% endif %}"
-                                aria-label="Slide {{ forloop.counter }}"></button>
-                            {% endfor %}
-                        </div>
-                    </div>
+                    </template>
                 </div>
             </div>
         </div>
@@ -256,123 +184,184 @@ Monitoreo
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 <script>
-    $(document).ready(function () {
-        function actualizarDatos(idCollar) {
-            console.log('ID del collar: ' + idCollar);
-
-            $.ajax({
-                url: "/monitor/datos/" + idCollar + "/",
-                dataType: 'json',
-                success: function (data) {
-                    var collares = data.collar_info;
-                    console.log(collares);
-                    $('#datos-concurrentes-' + idCollar).html(
-                        '<div class="card border-2 border-primary rounded-3 h-100">' +
-                        '<div class="card-body">' +
-                        '<h5 class="card-title text-center mb-0">Último registro del collar ' + collares.idCollar + '</h5>' +
-                        '<p class="card-text text-center fs-6 my-0">Nombre: ' + collares.nombre + '</p>' +
-                        '<p class="card-text text-center fs-6 my-0">Temperatura: ' + collares.temperatura + '°C</p>' +
-                        '<p class="card-text text-center fs-6 my-0">Pulsaciones: ' + collares.pulsaciones + ' bpm</p>' +
-                        '<p class="card-text text-center fs-6 my-0">Fecha de registro: ' + collares.fecha_registro + '</p>' +
-                        '</div>' +
-                        '</div>'
-                    );
-
-                    var registros = data.ultimos_registros;
-                    var ctx = document.getElementById('myChart' + idCollar).getContext('2d');
-                    var labels = registros.map(function (item) {
-                        return item.fecha_control;
-                    });
-                    var temperaturas = registros.map(function (item) {
-                        return item.temperatura;
-                    });
-                    var pulsaciones = registros.map(function (item) {
-                        return item.pulsaciones;
-                    });
-
-                    var myChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'Temperatura',
-                                data: temperaturas,
-                                backgroundColor: 'rgba(255, 99, 132, 0.3)',
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Pulsaciones',
-                                data: pulsaciones,
-                                backgroundColor: 'rgba(54, 162, 235, 0.3)',
-                                borderColor: 'rgba(54, 162, 235, 1)',
-                                borderWidth: 2
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    display: true,
-                                    labels: {
-                                        color: '#007bff'
-                                    }
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Constantes fisiológicas del collar ' + collares.nombre,
-                                    color: '#007bff',
-                                    font: {
-                                        size: 18
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: {
-                                        color: '#6c757d'
-                                    }
-                                },
-                                x: {
-                                    ticks: {
-                                        color: '#6c757d',
-                                        callback: function (value, index, values) {
-                                            if (value.length > 10) {
-                                                return value.substr(0, 10) + '...';
-                                            } else {
-                                                return value;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
+    window.monitorApp = function(collares = []) {
+        return {
+            currentIndex: 0,
+            collares: collares,
+            showSpinner: {},
+            collareData: {},
+            loadingData: {},
+            
+            init() {
+                this.collares.forEach(collar => {
+                    this.showSpinner[collar.idCollar] = false;
+                    this.collareData[collar.idCollar] = {};
+                    this.loadingData[collar.idCollar] = false;
+                });
+                
+                this.$nextTick(() => {
+                    this.updateChart();
+                    setInterval(() => {
+                        this.updateChart();
+                        this.next();
+                    }, 8000);
+                });
+            },
+            
+            generateSVGChart(temps, pulses) {
+                const width = 800, height = 400;
+                const padding = { top: 40, right: 40, bottom: 40, left: 60 };
+                const chartWidth = width - padding.left - padding.right;
+                const chartHeight = height - padding.top - padding.bottom;
+                
+                if (!temps || !pulses || temps.length === 0) {
+                    return `<svg width="100%" height="100%" color: #193b80; font-family: Arial, sans-serif;  viewBox="0 0 ${width} ${height}">
+                        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Sin datos</text>
+                    </svg>`;
                 }
-            });
-        }
-
-        $('#carouselExampleControls').on('slid.bs.carousel', function (e) {
-            var activeItem = $(e.relatedTarget).find('.datos-concurrentes');
-            var idCollar = activeItem.data('id');
-            actualizarDatos(idCollar);
-        });
-
-        var firstItem = $('.carousel-item.active .datos-concurrentes');
-        var firstIdCollar = firstItem.data('id');
-        actualizarDatos(firstIdCollar);
-
-        setInterval(function () {
-            var activeItem = $('.carousel-item.active .datos-concurrentes');
-            var idCollar = activeItem.data('id');
-            actualizarDatos(idCollar);
-        }, 5000);
-    });
+                
+                const allVals = [...temps, ...pulses];
+                const minTemp = Math.min(...temps) - 1;
+                const maxTemp = Math.max(...temps) + 1;
+                const minPulse = Math.min(...pulses) - 5;
+                const maxPulse = Math.max(...pulses) + 5;
+                
+                const tempRange = maxTemp - minTemp || 1;
+                const pulseRange = maxPulse - minPulse || 1;
+                
+                const tempPoints = temps.map((val, i) => {
+                    const x = padding.left + (i / (temps.length - 1 || 1)) * chartWidth;
+                    const y = padding.top + chartHeight - ((val - minTemp) / tempRange) * chartHeight;
+                    return { x, y };
+                });
+                
+                const pulsePoints = pulses.map((val, i) => {
+                    const x = padding.left + (i / (pulses.length - 1 || 1)) * chartWidth;
+                    const y = padding.top + chartHeight - ((val - minPulse) / pulseRange) * chartHeight;
+                    return { x, y };
+                });
+                
+                // Función para generar curva Bezier suave
+                const generateCurve = (points) => {
+                    if (points.length < 2) return '';
+                    
+                    let path = `M ${points[0].x} ${points[0].y}`;
+                    
+                    for (let i = 1; i < points.length; i++) {
+                        const curr = points[i];
+                        const prev = points[i - 1];
+                        
+                        // Control point
+                        const cpx = (prev.x + curr.x) / 2;
+                        const cpy = (prev.y + curr.y) / 2;
+                        
+                        path += ` Q ${cpx} ${cpy} ${curr.x} ${curr.y}`;
+                    }
+                    return path;
+                };
+                
+                const tempPath = generateCurve(tempPoints);
+                const pulsePath = generateCurve(pulsePoints);
+                
+                let svg = `<svg width="70%" height="100%" display: flex; justify-content: center; align-items: center;  viewBox="0 0 ${width} ${height} " >
+                    <defs>
+                        <linearGradient id="grad-temp" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:rgba(255,99,132,0.3);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:rgba(255,99,132,0);stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="grad-pulse" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:rgba(54,162,235,0.3);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:rgba(54,162,235,0);stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Temperatura área -->
+                    <path d="${tempPath} L ${tempPoints[tempPoints.length-1].x} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z" 
+                        fill="url(#grad-temp)" stroke="none"/>
+                    
+                    <!-- Pulsaciones área -->
+                    <path d="${pulsePath} L ${pulsePoints[pulsePoints.length-1].x} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z" 
+                        fill="url(#grad-pulse)" stroke="none"/>
+                    
+                    <!-- Líneas suavizadas -->
+                    <path d="${tempPath}" fill="none" stroke="rgba(255, 99, 132, 1)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="${pulsePath}" fill="none" stroke="rgba(54, 162, 235, 1)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                    `;
+                
+                // Puntos temperatura
+                tempPoints.forEach(p => {
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="2" fill="rgba(255, 99, 132, 1)" stroke="white" stroke-width="1"/>`;
+                });
+                
+                // Puntos pulsaciones
+                pulsePoints.forEach(p => {
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="2" fill="rgba(54, 162, 235, 1)" stroke="white" stroke-width="1"/>`;
+                });
+                
+                svg += `
+                    <!-- Ejes -->
+                    <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + chartHeight}" stroke="#64758f" stroke-width="1"/>
+                    <line x1="${padding.left}" y1="${padding.top + chartHeight}" x2="${width - padding.right}" y2="${padding.top + chartHeight}" stroke="#3a5885" stroke-width="1"/>
+                    
+                    <!-- Legendas -->
+                    <text x="${width - padding.left - 100}" y="${padding.top + 10}" font-size="12" fill="rgba(255, 99, 132, 1)">● Temp(°C)</text>
+                    <text x="${width - padding.left - 100}" y="${padding.top + 25}" font-size="12" fill="rgba(54, 162, 235, 1)">● Pulse(bpm)</text>
+                </svg>`;
+                
+                return svg;
+            },
+            
+            async updateChart() {
+                if (!this.collares[this.currentIndex]) return;
+                
+                const collar = this.collares[this.currentIndex];
+                this.showSpinner[collar.idCollar] = true;
+                this.loadingData[collar.idCollar] = true;
+                
+                try {
+                    const response = await fetch(`/monitor/datos/${collar.idCollar}/`);
+                    if (!response.ok) throw new Error('Error en la API');
+                    
+                    const data = await response.json();
+                    const collareInfo = data.collar_info;
+                    const registros = data.ultimos_registros;
+                    
+                    this.collareData[collar.idCollar] = collareInfo;
+                    
+                    const temperaturas = registros.map(item => parseFloat(item.temperatura));
+                    const pulsaciones = registros.map(item => parseFloat(item.pulsaciones));
+                    
+                    const chartContainer = document.querySelector(`[data-chart-id="${collar.idCollar}"]`);
+                    if (chartContainer) {
+                        chartContainer.innerHTML = this.generateSVGChart(temperaturas, pulsaciones);
+                    }
+                    
+                    this.showSpinner[collar.idCollar] = false;
+                    this.loadingData[collar.idCollar] = false;
+                } catch (error) {
+                    this.showSpinner[collar.idCollar] = false;
+                    this.loadingData[collar.idCollar] = false;
+                    //alert('Error al cargar los datos: ' + error.message);
+                }
+            },
+            
+            previous() {
+                this.currentIndex = (this.currentIndex - 1 + this.collares.length) % this.collares.length;
+                this.updateChart();
+            },
+            
+            next() {
+                this.currentIndex = (this.currentIndex + 1) % this.collares.length;
+                this.updateChart();
+            },
+            
+            goToSlide(index) {
+                this.currentIndex = index;
+                this.updateChart();
+            }
+        };
+    };
 </script>
 {% endblock %}

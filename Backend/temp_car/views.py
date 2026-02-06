@@ -150,14 +150,14 @@ def monitoreo_actual(request):
 def dashBoardData(request, id_collar=None):
     """
     API endpoint para obtener datos del dashboard de un bovino específico
-    Retorna información del collar y los controles de monitoreo del turno actual
+    Retorna información del collar y los últimos 15 registros de lecturas (Arduino + app móvil)
     
     Args:
         request: HttpRequest
         id_collar: ID del collar a consultar
         
     Returns:
-        JsonResponse con collar_info y ultimos_registros del turno actual
+        JsonResponse con collar_info y ultimos_registros para gráficas
     """
     # Validar parámetro requerido
     if id_collar is None:
@@ -183,79 +183,53 @@ def dashBoardData(request, id_collar=None):
     hora_fin = turno_info['hora_fin']
     fecha_actual = turno_info['fecha_actual']
     
-    # Buscar controles del turno actual de hoy
-    controles_turno_actual = (
-        ControlMonitoreo.objects
-        .filter(id_Lectura__id_Bovino=bovino, fecha_lectura=fecha_actual)
+    # Obtener ÚLTIMOS REGISTROS (últimas 15 lecturas) de Arduino y app móvil
+    # Se buscan Lecturas directas que son la fuente de verdad
+    ultimos_registros = (
+        Lectura.objects
+        .filter(id_Bovino=bovino)
         .select_related(
-            'id_Lectura',
-            'id_Lectura__id_Temperatura', 
-            'id_Lectura__id_Pulsaciones',
-            'id_User'
+            'id_Temperatura', 
+            'id_Pulsaciones'
         )
-        .order_by('-hora_lectura')
+        .order_by('-fecha_lectura', '-hora_lectura')[:15]
     )
     
-    # Filtrar por rango horario del turno
-    controles_en_turno = []
-    for control in controles_turno_actual:
-        hora_control = control.hora_lectura.hour
-        if turno_actual == 'night':
-            if hora_control < 7:
-                controles_en_turno.append(control)
-        else:
-            if hora_control >= hora_inicio and hora_control < hora_fin:
-                controles_en_turno.append(control)
+    # Invertir para mostrar del más antiguo al más nuevo
+    ultimos_registros = list(reversed(list(ultimos_registros)))
     
-    # Usar datos del primer control del turno actual si existe
-    if controles_en_turno:
-        control_principal = controles_en_turno[0]
+    # Usar datos de la lectura más reciente si existe
+    if ultimos_registros:
+        lectura_principal = ultimos_registros[-1]  # La última (más reciente)
         collar_info = {
             'idCollar': bovino.idCollar,
             'nombre': bovino.nombre,
-            'temperatura': control_principal.id_Lectura.temperatura_valor,
-            'pulsaciones': control_principal.id_Lectura.pulsaciones_valor,
-            'estado_salud': control_principal.id_Lectura.estado_salud,
-            'temperatura_normal': control_principal.id_Lectura.temperatura_normal,
-            'pulsaciones_normales': control_principal.id_Lectura.pulsaciones_normales,
-            'fecha_registro': f"{control_principal.fecha_lectura.strftime('%Y-%m-%d')} {control_principal.hora_lectura.strftime('%H:%M:%S')}",
+            'temperatura': lectura_principal.temperatura_valor,
+            'pulsaciones': lectura_principal.pulsaciones_valor,
+            'estado_salud': lectura_principal.estado_salud,
+            'temperatura_normal': lectura_principal.temperatura_normal,
+            'pulsaciones_normales': lectura_principal.pulsaciones_normales,
+            'fecha_registro': f"{lectura_principal.fecha_lectura.strftime('%Y-%m-%d')} {lectura_principal.hora_lectura.strftime('%H:%M:%S')}",
             'turno': turno_display,
         }
     else:
-        # Si no hay control en el turno, usar la última lectura de Arduino
-        lectura = bovino.lecturas.order_by('-fecha_lectura', '-hora_lectura').first()
-        
-        if not lectura:
-            return JsonResponse({
-                'error': 'No hay lecturas disponibles',
-                'detalle': f'El bovino {bovino.nombre} no tiene lecturas registradas'
-            }, status=404)
-        
-        collar_info = {
-            'idCollar': bovino.idCollar,
-            'nombre': bovino.nombre,
+        # Si no hay lecturas, retornar error
+        return JsonResponse({
+            'error': 'No hay lecturas disponibles',
+            'detalle': f'El bovino {bovino.nombre} no tiene lecturas registradas'
+        }, status=404)
+
+    # Construir lista de los últimos registros para gráficas
+    registros = [
+        {
+            'id_lectura': lectura.id_Lectura,
             'temperatura': lectura.temperatura_valor,
             'pulsaciones': lectura.pulsaciones_valor,
             'estado_salud': lectura.estado_salud,
-            'temperatura_normal': lectura.temperatura_normal,
-            'pulsaciones_normales': lectura.pulsaciones_normales,
-            'fecha_registro': f"{lectura.fecha_lectura.strftime('%Y-%m-%d')} {lectura.hora_lectura.strftime('%H:%M:%S')}",
-            'turno': turno_display,
+            'fecha_control': f"{lectura.fecha_lectura.strftime('%d/%m')} {lectura.hora_lectura.strftime('%H:%M')}",
+            'fuente': lectura.fuente if lectura.fuente else 'arduino',
         }
-
-    # Construir lista de controles del turno actual
-    registros = [
-        {
-            'id_control': control.id_Control,
-            'temperatura': control.id_Lectura.temperatura_valor,
-            'pulsaciones': control.id_Lectura.pulsaciones_valor,
-            'estado_salud': control.id_Lectura.estado_salud,
-            'fecha_control': f"{control.fecha_lectura.strftime('%Y-%m-%d')} {control.hora_lectura.strftime('%H:%M:%S')}",
-            'observaciones': control.observaciones or 'Sin observaciones',
-            'accion_tomada': control.accion_tomada or 'Sin acción',
-            'registrado_por': control.id_User.get_full_name() if control.id_User else 'Sistema',
-        }
-        for control in controles_en_turno
+        for lectura in ultimos_registros
     ]
 
     return JsonResponse({
@@ -351,11 +325,16 @@ def reportes(request):
         try:
             fecha_busqueda_obj = datetime.strptime(fecha_busqueda, '%Y-%m-%d').date()
             reportes_list = reportes_list.filter(fecha_lectura=fecha_busqueda_obj)
+            # Ordenar por fecha y hora  y nombre del bovino
+            reportes_list = reportes_list.order_by('-fecha_lectura', '-hora_lectura', 'id_Lectura__id_Bovino__nombre')
         except ValueError:
             pass
 
     # Configurar paginación
-    paginator = Paginator(reportes_list, 10)
+    paginator = Paginator(reportes_list, 6)
+    # Obtener la página solicitada por nombre, con manejo de errores
+    
+    
     
     try:
         reportes = paginator.page(page)
@@ -445,18 +424,9 @@ def reporte_pdf(request):
 
 def render_to_pdf(html_content, context_dict={}):
     header_html = """
-<table style="width: 100%; border-collapse: collapse;">
-    <tr>
-        <td style="padding: 10px;">
-            <img src="./temp_car/static/assets/img/logounl.png" alt="Left Logo" style="width: 195px; height: auto; margin-right: 10px;">
-        </td>
-        <td style="padding: 10px; vertical-align: top; text-align: right;">
-            <img src="./temp_car/static/assets/img/logoComputacion.png" alt="Right Logo" style="width: 100px; height: auto; margin-left: 10px;">
-        </td>
-    </tr>
-</table>
 <div style="text-align: center; margin: 20px 0;">
     <h1 style="font-size: 24px; color: #333; margin: 0;">Reporte de Monitoreos al Ganado Bovino Lechero</h1>
+    <p style="font-size: 12px; color: #666; margin-top: 5px;">Universidad Nacional de Loja - Carrera de Ingeniería en Computación</p>
 </div>
 """
 
@@ -464,7 +434,7 @@ def render_to_pdf(html_content, context_dict={}):
 
     footer_html = """
 <footer style="text-align: center; margin-top: 20px; background-color: #f8f8f8; padding: 10px;">
-    <p style="font-size: 12px; color: #333; margin: 0;">© All rights reserved | Carrera de Ingeniería en Computación</p>
+    <p style="font-size: 12px; color: #333; margin: 0;">© Todos los derechos reservados | Carrera de Ingeniería en Computación</p>
 </footer>
 """
 
@@ -483,7 +453,7 @@ def temperatura(request):
     """
     Vista de monitoreo de temperatura corporal
     Muestra historial de CONTROLES DE MONITOREO registrados
-    SOLO DATOS DE APP MÓVIL (excluye Arduino)
+    INCLUYE DATOS DE ARDUINO Y APP MÓVIL
     
     Args:
         request: HttpRequest con parámetro page opcional
@@ -494,10 +464,10 @@ def temperatura(request):
     try:
         page = request.GET.get('page', 1)
         
-        # Obtener CONTROLES de monitoreo (no lecturas) con app móvil
+        # Obtener CONTROLES de monitoreo (no lecturas) con datos de Arduino y App móvil
         reportes_list = (
             ControlMonitoreo.objects
-            .filter(id_Lectura__fuente='app_movil')  # Solo datos de app móvil
+            .filter(id_Lectura__isnull=False)  # Solo que tengan Lectura asociada
             .select_related(
                 'id_Lectura',
                 'id_Lectura__id_Bovino',
@@ -511,7 +481,7 @@ def temperatura(request):
         # Obtener solo bovinos activos
         collares = Bovinos.objects.filter(activo=True).order_by('nombre')
 
-        paginator = Paginator(reportes_list, 10)
+        paginator = Paginator(reportes_list, 5)
         reportes = paginator.get_page(page)
 
     except Exception as e:
@@ -532,7 +502,7 @@ def frecuencia(request):
     """
     Vista de monitoreo de frecuencia cardíaca (pulsaciones)
     Muestra historial de CONTROLES DE MONITOREO registrados
-    SOLO DATOS DE APP MÓVIL (excluye Arduino)
+    INCLUYE DATOS DE ARDUINO Y APP MÓVIL
     
     Args:
         request: HttpRequest con parámetro page opcional
@@ -543,10 +513,10 @@ def frecuencia(request):
     try:
         page = request.GET.get('page', 1)
         
-        # Obtener CONTROLES de monitoreo (no lecturas) con app móvil
+        # Obtener CONTROLES de monitoreo (no lecturas) con datos de Arduino y App móvil
         reportes_list = (
             ControlMonitoreo.objects
-            .filter(id_Lectura__fuente='app_movil')  # Solo datos de app móvil
+            .filter(id_Lectura__isnull=False)  # Solo que tengan Lectura asociada
             .select_related(
                 'id_Lectura',
                 'id_Lectura__id_Bovino',
@@ -560,13 +530,9 @@ def frecuencia(request):
         # Obtener solo bovinos activos
         collares = Bovinos.objects.filter(activo=True).order_by('nombre')
 
-        paginator = Paginator(reportes_list, 10)
-        reportes = paginator.page(page)
+        paginator = Paginator(reportes_list, 5)
+        reportes = paginator.get_page(page)
 
-    except PageNotAnInteger:
-        reportes = paginator.page(1)
-    except EmptyPage:
-        reportes = paginator.page(paginator.num_pages)
     except Exception as e:
         reportes = []
         collares = []
