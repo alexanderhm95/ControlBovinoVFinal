@@ -4,160 +4,111 @@
 
 {% block title %}Login{% endblock %}
 
-{% block styles %}
-<style>
-    .alert-container {
-        position: fixed;
-        bottom: 1%;
-        right: 1%;
-        z-index: 1000;
-        width: 60%;
-        max-width: 350px;
-        text-align: center;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(235, 130, 130, 0.2);
-    }
-
-    body {
-        margin: 0;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background: linear-gradient(135deg, #7cbeff1c, #ffffff);
-        animation: water 4s infinite alternate;
-    }
-
-    @keyframes water {
-        0% {
-            background-position: 0% 0%;
-        }
-        100% {
-            background-position: 100% 100%;
-        }
-    }
-
-    .curve {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #ffffff;
-        clip-path: ellipse(50% 30% at 50% 0);
-        z-index: -1;
-    }
-
-    .reflections {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-        animation: reflections 4s infinite alternate;
-    }
-
-    @keyframes reflections {
-        0% {
-            background-position: 0% 0%;
-        }
-        100% {
-            background-position: 100% 100%;
-        }
-    }
-
-    @media (max-width: 767px) {
-        .container {
-            width: 90%;
-        }
-        .card {
-            width: 100%;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="curve"></div>
-<div class="reflections"></div>
-<main>
-    <div class="container">
-        <section class="section min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-            <div class="row justify-content-center">
-                <div class="col-lg-7 col-md-9 col-10">
-                    <div class="card shadow-lg border-0 p-4">
-                        <div class="card-header text-center py-4">
-                            <a href="#" class="logo d-flex align-items-center justify-content-center">
-                                <img src="{% static 'assets/img/logounl.png' %}" alt="Logo" class="img-fluid" style="max-height: 120px;">
-                            </a>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="card-title text-center mb-4 fs-4">Iniciar Sesión</h5>
-                            {% if messages %}
-                            <div id="alert-container" class="alert-container" style="display: none;">
-                                {% for message in messages %}
-                                <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
-                                    {{ message }}
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <script>
-                                window.onload = function() {
-                                    mostrarAlerta();
-                                };
-                            </script>
-                            {% endif %}
-                            <form action="" method="POST" class="row g-3 needs-validation" novalidate>
-                                {% csrf_token %}
-                                <div class="form-group mb-3">
-                                    <label for="username" class="form-label">Usuario</label>
-                                    <input type="text" class="form-control" id="username" name="username" required>
-                                    <div class="invalid-feedback">
-                                        Por favor ingrese su usuario.
-                                    </div>
-                                </div>
-                                <div class="form-group mb-3">
-                                    <label for="password" class="form-label">Contraseña</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                    <div class="form-check d-flex justify-content-between align-items-center mt-2">
-                                        <input class="form-check-input" type="checkbox" id="show-password" onclick="togglePassword()">
-                                        <label class="form-check-label text-muted fs-6 mb-0" for="show-password">Mostrar contraseña</label>
-                                    </div>
-                                    <div class="invalid-feedback">
-                                        Por favor ingrese su contraseña.
-                                    </div>
-                                </div>
-                                <button class="btn btn-primary w-100" type="submit">Ingresar</button>
-                                <div class="text-center mt-3">
-                                    <a href="{% url 'passwordReset' %}">¿Olvidaste tu contraseña?</a>
-                                    <p class="mt-2">No tienes cuenta? <a href="{% url 'crear_usuario' %}">Regístrate</a></p>
-                                </div>
-                            </form>
+<div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md">
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+            <!-- Card Header -->
+            <div class="bg-white px-6 py-8 border-b border-gray-200 flex items-center justify-center">
+                <a href="#" class="flex items-center justify-center">
+                    <img src="{% static 'assets/img/logounl.png' %}" alt="Logo" class="h-20 w-auto">
+                </a>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="px-6 py-8">
+                <h2 class="text-2xl font-bold text-center text-gray-900 mb-6">Iniciar Sesión</h2>
+                
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="p-4 rounded-lg mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% else %}bg-red-50 text-red-800 border border-red-200{% endif %}" role="alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <form action="" method="POST" class="space-y-4 needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Usuario</label>
+                        <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" id="username" name="username" required>
+                        <div id="username-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese su usuario.
                         </div>
                     </div>
-                </div>
+                    
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                        <input type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" id="password" name="password" required>
+                        <div class="flex items-center justify-between mt-2">
+                            <div class="flex items-center">
+                                <input class="w-4 h-4 accent-blue-500 cursor-pointer" type="checkbox" id="show-password" onclick="togglePassword()">
+                                <label class="ml-2 text-sm text-gray-600 cursor-pointer" for="show-password">Mostrar contraseña</label>
+                            </div>
+                        </div>
+                        <div id="password-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese su contraseña.
+                        </div>
+                    </div>
+                    
+                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 mt-6" type="submit">
+                        Ingresar
+                    </button>
+                    
+                    <div class="text-center mt-6 space-y-2">
+                        <p><a href="{% url 'passwordReset' %}" class="text-blue-600 hover:text-blue-800 font-medium transition">¿Olvidaste tu contraseña?</a></p>
+                        <p class="text-gray-600 text-sm">No tienes cuenta? <a href="{% url 'crear_usuario' %}" class="text-blue-600 hover:text-blue-800 font-medium transition">Regístrate</a></p>
+                    </div>
+                </form>
             </div>
-        </section>
+        </div>
     </div>
-</main>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function mostrarAlerta() {
-        var alertContainer = document.getElementById('alert-container');
-        alertContainer.style.display = 'block';
-        setTimeout(function() {
-            alertContainer.style.display = 'none';
-        }, 5000);
-    }
-
     function togglePassword() {
         var passwordField = document.getElementById('password');
         var showPasswordCheckbox = document.getElementById('show-password');
         passwordField.type = showPasswordCheckbox.checked ? 'text' : 'password';
     }
+
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    var isValid = form.checkValidity() === false;
+                    if (isValid) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        // Mostrar errores
+                        var usernameField = document.getElementById('username');
+                        var passwordField = document.getElementById('password');
+                        var usernameError = document.getElementById('username-error');
+                        var passwordError = document.getElementById('password-error');
+                        
+                        if (!usernameField.value.trim()) {
+                            usernameError.classList.remove('hidden');
+                        } else {
+                            usernameError.classList.add('hidden');
+                        }
+                        
+                        if (!passwordField.value.trim()) {
+                            passwordError.classList.remove('hidden');
+                        } else {
+                            passwordError.classList.add('hidden');
+                        }
+                    }
+                }, false);
+            });
+        }, false);
+    })();
 </script>
 {% endblock %}
