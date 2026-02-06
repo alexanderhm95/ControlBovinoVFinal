@@ -6,235 +6,208 @@
 Registro de Usuario
 {% endblock %}
 
-{% block styles %}
-<style>
-    .alert-container {
-        position: fixed;
-        bottom: 1%;
-        right: 1%;
-        z-index: 1000;
-        width: 80%;
-        max-width: 350px;
-        text-align: center;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    body {
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background: linear-gradient(135deg, #d0eaff, #ffffff);
-        animation: water 4s infinite alternate;
-    }
-
-    @keyframes water {
-        0% {
-            background-position: 0% 0%;
-        }
-        100% {
-            background-position: 100% 100%;
-        }
-    }
-
-    .curve {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #ffffff;
-        clip-path: ellipse(50% 30% at 50% 0);
-        z-index: -1;
-    }
-
-    .reflections {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-        animation: reflections 4s infinite alternate;
-    }
-
-    @keyframes reflections {
-        0% {
-            background-position: 0% 0%;
-        }
-        100% {
-            background-position: 100% 100%;
-        }
-    }
-
-    .card {
-        border-radius: 15px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        padding: 2rem;
-    }
-
-    .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-        transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
-    }
-
-    .btn-primary:hover {
-        background-color: #0056b3;
-        border-color: #004085;
-    }
-
-    .btn-secondary {
-        background-color: #6c757d;
-        border-color: #6c757d;
-        transition: background-color 0.3s ease-in-out, border-color 0.3s ease-in-out;
-    }
-
-    .btn-secondary:hover {
-        background-color: #5a6268;
-        border-color: #545b62;
-    }
-
-    .form-control {
-        border-radius: 8px;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
-    }
-
-    .form-check {
-        margin-top: 1rem;
-    }
-
-    .card-title {
-        margin-bottom: 1.5rem;
-    }
-
-    @media (max-width: 767px) {
-        .container {
-            width: 90%;
-        }
-
-        .card {
-            width: 100%;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="curve"></div>
-<div class="reflections"></div>
-<main>
-    <div class="container">
-        <section class="section min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
-            <div class="row justify-content-center">
-                <div class="col-lg-4 col-md-6 col-10">
-                    <div class="card border-0 shadow-lg">
-                        <div class="card-header text-center py-4">
-                            <a href="#" class="logo d-flex justify-content-center">
-                                <img src="{% static 'assets/img/logounl.png' %}" alt="Logo" class="img-fluid" style="max-height: 100px;">
-                            </a>
+<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-8">
+    <div class="w-full max-w-md">
+        <!-- Card Container -->
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-8">
+            
+            <!-- Header with Logo -->
+            <div class="flex justify-center mb-8">
+                <img src="{% static 'assets/img/logounl.png' %}" alt="Logo" class="h-24 object-contain">
+            </div>
+
+            <!-- Title -->
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Registrar nueva cuenta</h1>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div id="alert-container" class="mb-6 hidden">
+                {% for message in messages %}
+                <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700{% else %}bg-red-50 border border-red-200 text-red-700{% endif %}" role="alert">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <form action="" method="POST" id="registerForm">
+                {% csrf_token %}
+
+                <!-- Grid 2 Columnas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Nombre -->
+                    <div>
+                        <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.nombre.label }}
+                        </label>
+                        <input 
+                            type="text" 
+                            name="{{ form.nombre.name }}" 
+                            id="{{ form.nombre.id_for_label }}"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            required>
+                        <div id="nombre-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese su nombre.
                         </div>
-                        <div class="card-body">
-                            <h6 class="card-title text-center fs-4 mb-4">Registrar nueva cuenta</h6>
-                            {% if messages %}
-                            <div id="alert-container" class="alert-container" style="display: none;">
-                                {% for message in messages %}
-                                <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %}" role="alert">
-                                    {{ message }}
-                                </div>
-                                {% endfor %}
-                            </div>
-                            <script>
-                                window.onload = function() {
-                                    mostrarAlerta();
-                                };
-                            </script>
-                            {% endif %}
-                            <form action="" method="POST" class="row g-3 needs-validation" novalidate>
-                                {% csrf_token %}
-                                <div class="form-group">
-                                    <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
-                                    <input type="text" class="form-control {% if form.nombre.errors %}is-invalid{% endif %}" name="{{ form.nombre.name }}" id="{{ form.nombre.id_for_label }}" required>
-                                    {% if form.nombre.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.nombre.errors|join:", " }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label for="{{ form.apellido.id_for_label }}">{{ form.apellido.label }}</label>
-                                    <input type="text" class="form-control {% if form.apellido.errors %}is-invalid{% endif %}" name="{{ form.apellido.name }}" id="{{ form.apellido.id_for_label }}" required>
-                                    {% if form.apellido.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.apellido.errors|join:", " }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label for="{{ form.cedula.id_for_label }}">{{ form.cedula.label }}</label>
-                                    <input type="text" class="form-control {% if form.cedula.errors %}is-invalid{% endif %}" name="{{ form.cedula.name }}" id="{{ form.cedula.id_for_label }}" required>
-                                    {% if form.cedula.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.cedula.errors|join:", " }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                                    <input type="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Ingrese un correo electrónico válido">
-                                    {% if form.email.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.email.errors|join:", " }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                <div class="form-group">
-                                    <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
-                                    <input type="text" class="form-control {% if form.telefono.errors %}is-invalid{% endif %}" name="{{ form.telefono.name }}" id="{{ form.telefono.id_for_label }}" required>
-                                    {% if form.telefono.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.telefono.errors|join:", " }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center mt-3">
-                                    <button type="button" class="btn btn-secondary mb-2 mb-sm-0" onclick="window.location.href='{% url 'salir' %}'">
-                                        <i class="fas fa-arrow-left"></i> Regresar
-                                    </button>
-                                    <button type="submit" class="btn btn-primary">Registrar Usuario</button>
-                                </div>
-                            </form>
+                        {% if form.nombre.errors %}
+                        <div class="text-red-600 text-sm mt-1">
+                            {{ form.nombre.errors|join:", " }}
                         </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Apellido -->
+                    <div>
+                        <label for="{{ form.apellido.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.apellido.label }}
+                        </label>
+                        <input 
+                            type="text" 
+                            name="{{ form.apellido.name }}" 
+                            id="{{ form.apellido.id_for_label }}"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            required>
+                        <div id="apellido-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese su apellido.
+                        </div>
+                        {% if form.apellido.errors %}
+                        <div class="text-red-600 text-sm mt-1">
+                            {{ form.apellido.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Cédula -->
+                    <div>
+                        <label for="{{ form.cedula.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.cedula.label }}
+                        </label>
+                        <input 
+                            type="text" 
+                            name="{{ form.cedula.name }}" 
+                            id="{{ form.cedula.id_for_label }}"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            required>
+                        <div id="cedula-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese su cédula.
+                        </div>
+                        {% if form.cedula.errors %}
+                        <div class="text-red-600 text-sm mt-1">
+                            {{ form.cedula.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.email.label }}
+                        </label>
+                        <input 
+                            type="email" 
+                            name="{{ form.email.name }}" 
+                            id="{{ form.email.id_for_label }}"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            required>
+                        <div id="email-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese un correo válido.
+                        </div>
+                        {% if form.email.errors %}
+                        <div class="text-red-600 text-sm mt-1">
+                            {{ form.email.errors|join:", " }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Teléfono (ancho completo) -->
+                    <div class="col-span-1 md:col-span-2">
+                        <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.telefono.label }}
+                        </label>
+                        <input 
+                            type="text" 
+                            name="{{ form.telefono.name }}" 
+                            id="{{ form.telefono.id_for_label }}"
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                            required>
+                        <div id="telefono-error" class="hidden text-red-600 text-sm mt-1">
+                            Por favor ingrese su teléfono.
+                        </div>
+                        {% if form.telefono.errors %}
+                        <div class="text-red-600 text-sm mt-1">
+                            {{ form.telefono.errors|join:", " }}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-            </div>
-        </section>
-    </div>
-</main>
-{% endblock %}
 
-{% block scripts %}
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 pt-8">
+                    <button 
+                        type="button" 
+                        onclick="window.location.href='{% url 'salir' %}'"
+                        class="flex-1 px-4 py-2.5 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg transition flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </button>
+                    <button 
+                        type="submit"
+                        class="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                        Registrar Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-    (function() {
-        'use strict';
-        window.addEventListener('load', function() {
-            var forms = document.getElementsByClassName('needs-validation');
-            var validation = Array.prototype.filter.call(forms, function(form) {
-                form.addEventListener('submit', function(event) {
-                    if (form.checkValidity() === false) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-                    form.classList.add('was-validated');
-                }, false);
+    document.getElementById('registerForm').addEventListener('submit', function(event) {
+        const form = this;
+        const fields = [
+            { id: 'nombre', name: 'nombre' },
+            { id: 'apellido', name: 'apellido' },
+            { id: 'cedula', name: 'cedula' },
+            { id: 'email', name: 'email' },
+            { id: 'telefono', name: 'telefono' }
+        ];
+
+        let isValid = true;
+
+        fields.forEach(field => {
+            const inputField = form[field.name];
+            const errorDiv = document.getElementById(field.id + '-error');
+            
+            if (!inputField.value.trim() || (field.name === 'email' && !inputField.value.includes('@'))) {
+                errorDiv.classList.remove('hidden');
+                isValid = false;
+            } else {
+                errorDiv.classList.add('hidden');
+            }
+        });
+
+        if (!isValid) {
+            event.preventDefault();
+        }
+    });
+
+    // Remove error when user starts typing
+    const fields = ['nombre', 'apellido', 'cedula', 'email', 'telefono'];
+    fields.forEach(fieldName => {
+        const field = document.getElementById(fieldName === 'apellido' ? 'id_apellido' : 
+                                             fieldName === 'cedula' ? 'id_cedula' :
+                                             fieldName === 'telephone' ? 'id_telefono' :
+                                             'id_' + fieldName);
+        if (field) {
+            field.addEventListener('input', function() {
+                const errorDiv = document.getElementById(fieldName + '-error');
+                if (this.value.trim()) {
+                    errorDiv.classList.add('hidden');
+                }
             });
-        }, false);
-    })();
+        }
+    });
 </script>
 {% endblock %}
