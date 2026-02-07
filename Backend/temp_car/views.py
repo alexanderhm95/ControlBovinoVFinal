@@ -183,14 +183,15 @@ def dashBoardData(request, id_collar=None):
     hora_fin = turno_info['hora_fin']
     fecha_actual = turno_info['fecha_actual']
     
-    # Obtener ÚLTIMOS REGISTROS (últimas 15 lecturas) de Arduino y app móvil
-    # Se buscan Lecturas directas que son la fuente de verdad
+    # Obtener ÚLTIMOS REGISTROS (últimos 15 controles) de Arduino y app móvil
+    # Se buscan controles con Lectura asociada para obtener temperatura y pulsaciones
     ultimos_registros = (
-        Lectura.objects
-        .filter(id_Bovino=bovino)
+        ControlMonitoreo.objects
+        .filter(id_Lectura__id_Bovino=bovino, id_Lectura__isnull=False)
         .select_related(
-            'id_Temperatura', 
-            'id_Pulsaciones'
+            'id_Lectura',
+            'id_Lectura__id_Temperatura',
+            'id_Lectura__id_Pulsaciones'
         )
         .order_by('-fecha_lectura', '-hora_lectura')[:15]
     )
@@ -200,7 +201,8 @@ def dashBoardData(request, id_collar=None):
     
     # Usar datos de la lectura más reciente si existe
     if ultimos_registros:
-        lectura_principal = ultimos_registros[-1]  # La última (más reciente)
+        control_principal = ultimos_registros[-1]  # El último (más reciente)
+        lectura_principal = control_principal.id_Lectura
         collar_info = {
             'idCollar': bovino.idCollar,
             'nombre': bovino.nombre,
@@ -209,7 +211,7 @@ def dashBoardData(request, id_collar=None):
             'estado_salud': lectura_principal.estado_salud,
             'temperatura_normal': lectura_principal.temperatura_normal,
             'pulsaciones_normales': lectura_principal.pulsaciones_normales,
-            'fecha_registro': f"{lectura_principal.fecha_lectura.strftime('%Y-%m-%d')} {lectura_principal.hora_lectura.strftime('%H:%M:%S')}",
+            'fecha_registro': f"{control_principal.fecha_lectura.strftime('%Y-%m-%d')} {control_principal.hora_lectura.strftime('%H:%M:%S')}",
             'turno': turno_display,
         }
     else:
@@ -222,14 +224,14 @@ def dashBoardData(request, id_collar=None):
     # Construir lista de los últimos registros para gráficas
     registros = [
         {
-            'id_lectura': lectura.id_Lectura,
-            'temperatura': lectura.temperatura_valor,
-            'pulsaciones': lectura.pulsaciones_valor,
-            'estado_salud': lectura.estado_salud,
-            'fecha_control': f"{lectura.fecha_lectura.strftime('%d/%m')} {lectura.hora_lectura.strftime('%H:%M')}",
-            'fuente': lectura.fuente if lectura.fuente else 'arduino',
+            'id_lectura': control.id_Lectura.id_Lectura,
+            'temperatura': control.id_Lectura.temperatura_valor,
+            'pulsaciones': control.id_Lectura.pulsaciones_valor,
+            'estado_salud': control.id_Lectura.estado_salud,
+            'fecha_control': f"{control.fecha_lectura.strftime('%d/%m')} {control.hora_lectura.strftime('%H:%M')}",
+            'fuente': control.id_Lectura.fuente if control.id_Lectura.fuente else 'arduino',
         }
-        for lectura in ultimos_registros
+        for control in ultimos_registros
     ]
 
     return JsonResponse({
@@ -321,6 +323,7 @@ def reportes(request):
     )
 
     # Aplicar filtro por fecha si se proporciona
+    fecha_busqueda_obj = None
     if fecha_busqueda:
         try:
             fecha_busqueda_obj = datetime.strptime(fecha_busqueda, '%Y-%m-%d').date()
@@ -328,7 +331,7 @@ def reportes(request):
             # Ordenar por fecha y hora  y nombre del bovino
             reportes_list = reportes_list.order_by('-fecha_lectura', '-hora_lectura', 'id_Lectura__id_Bovino__nombre')
         except ValueError:
-            pass
+            fecha_busqueda_obj = None
 
     # Configurar paginación
     paginator = Paginator(reportes_list, 6)
@@ -347,12 +350,14 @@ def reportes(request):
         'reportes': reportes,
         'fecha_busqueda': fecha_busqueda or '',
         'total_reportes': paginator.count,
+        'pdf_disabled': bool(fecha_busqueda) and paginator.count == 0,
     }
 
     return render(request, 'appMonitor/dashboard/reports.html', context)
 
 def reporte_pdf(request):
     fecha_busqueda = request.GET.get('fecha_busqueda')
+    fecha_busqueda_obj = None
     
     # Obtener CONTROLES de monitoreo (no lecturas)
     reportes = (
@@ -377,7 +382,7 @@ def reporte_pdf(request):
 
     context = {
         'reportes': reportes,
-        'fecha_busqueda': fecha_busqueda.strftime('%Y-%m-%d') if fecha_busqueda else None,
+        'fecha_busqueda': fecha_busqueda_obj.strftime('%Y-%m-%d') if fecha_busqueda_obj else None,
     }
 
     # Construir tabla HTML manualmente

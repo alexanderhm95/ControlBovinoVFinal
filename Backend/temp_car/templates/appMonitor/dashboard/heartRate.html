@@ -130,6 +130,13 @@ Frecuencia Cardíaca
                                 <div class="spinner-overlay" :class="{ 'active': showSpinner[collar.idCollar] }">
                                     <div class="spinner"></div>
                                 </div>
+                                <div class="w-full text-center mb-4">
+                                    <h3 class="text-xl font-semibold text-gray-800">
+                                        Collar <span class="font-bold" x-text="collar.idCollar"></span>
+                                        <span class="text-gray-500">-</span>
+                                        <span class="font-bold" x-text="collar.nombre"></span>
+                                    </h3>
+                                </div>
                                 <div :data-chart-id="collar.idCollar" class="w-full h-full flex items-center justify-center">
                                     <!-- SVG se genera aquí -->
                                 </div>
@@ -265,9 +272,10 @@ Frecuencia Cardíaca
                 });
             },
             
-            generateSVGChart(data) {
-                const width = 800, height = 400;
-                const padding = { top: 40, right: 40, bottom: 40, left: 60 };
+            generateSVGChart(data, xLabels = [], maxIndex = null) {
+                const width = 900, height = 500;
+                const padding = { top: 40, right: 40, bottom: 80, left: 80 };
+                const backgroundChart = '#f9fafb';
                 const chartWidth = width - padding.left - padding.right;
                 const chartHeight = height - padding.top - padding.bottom;
                 
@@ -276,18 +284,31 @@ Frecuencia Cardíaca
                         <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Sin datos</text>
                     </svg>`;
                 }
+
+                const labelCount = xLabels.length || data.length;
+                const lastIndex = maxIndex === null ? labelCount - 1 : Math.min(maxIndex, labelCount - 1);
+                const safeData = data.slice(0, lastIndex + 1);
+                const numericData = safeData.filter(val => typeof val === 'number' && !Number.isNaN(val));
+
+                if (numericData.length === 0) {
+                    return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">
+                        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Sin datos</text>
+                    </svg>`;
+                }
                 
-                const minVal = Math.min(...data) - 1;
-                const maxVal = Math.max(...data) + 1;
+                const minVal = Math.min(...numericData);
+                const maxVal = Math.max(...numericData);
                 const range = maxVal - minVal || 1;
                 
-                const points = data.map((val, i) => {
-                    const x = padding.left + (i / (data.length - 1 || 1)) * chartWidth;
-                    const y = padding.top + chartHeight - ((val - minVal) / range) * chartHeight;
-                    return { x, y, val };
-                });
+                const points = safeData
+                    .map((val, i) => ({ val, i }))
+                    .filter(p => typeof p.val === 'number' && !Number.isNaN(p.val))
+                    .map(p => {
+                        const x = padding.left + (p.i / (labelCount - 1 || 1)) * chartWidth;
+                        const y = padding.top + chartHeight - ((p.val - minVal) / range) * chartHeight;
+                        return { x, y, val: p.val };
+                    });
                 
-                // Función para generar curva Bezier suave
                 const generateCurve = (pts) => {
                     if (pts.length < 2) return '';
                     
@@ -297,7 +318,6 @@ Frecuencia Cardíaca
                         const curr = pts[i];
                         const prev = pts[i - 1];
                         
-                        // Control point para curva suave
                         const cpx = (prev.x + curr.x) / 2;
                         const cpy = (prev.y + curr.y) / 2;
                         
@@ -315,23 +335,68 @@ Frecuencia Cardíaca
                             <stop offset="100%" style="stop-color:rgba(236,72,153,0);stop-opacity:1" />
                         </linearGradient>
                     </defs>
+
+                    <rect x="${padding.left}" y="${padding.top}" width="${chartWidth}" height="${chartHeight}" fill="${backgroundChart}" rx="4"/>
+                    
+                    <g class="grid-lines">
+                        ${Array.from({length: 6}).map((_, i) => {
+                            const yValue = minVal + (i * (range / 5));
+                            const y = padding.top + chartHeight - ((yValue - minVal) / range) * chartHeight;
+                            return `
+                                <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" 
+                                      stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+                                <text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" 
+                                      font-size="12" fill="#6b7280">${yValue.toFixed(0)} BPM</text>
+                            `;
+                        }).join('')}
+                    </g>
                     
                     <path d="${pathD} L ${points[points.length-1].x} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z" 
                         fill="url(#grad-pulse)" stroke="none"/>
                     
                     <path d="${pathD}" 
-                        fill="none" stroke="rgba(236, 72, 153, 1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
-                
-                points.forEach(p => {
-                    svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="rgba(236, 72, 153, 1)" stroke="white" stroke-width="2"/>`;
-                });
-                
-                svg += `
-                    <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + chartHeight}" stroke="#d1d5db" stroke-width="1"/>
-                    <line x1="${padding.left}" y1="${padding.top + chartHeight}" x2="${width - padding.right}" y2="${padding.top + chartHeight}" stroke="#d1d5db" stroke-width="1"/>
-                    <text x="${padding.left - 10}" y="${padding.top + 5}" text-anchor="end">${maxVal.toFixed(1)}</text>
-                    <text x="${padding.left - 10}" y="${padding.top + chartHeight + 5}" text-anchor="end">${minVal.toFixed(1)}</text>
-                    <text x="${width - padding.right - 20}" y="${padding.top + 20}" font-size="14" font-weight="bold" text-anchor="end" fill="rgba(236, 72, 153, 1)">● Pulse(bpm)</text>
+                        fill="none" stroke="rgba(236, 72, 153, 1)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    
+                    ${points.map((p) => `
+                        <g class="data-point">
+                            <circle cx="${p.x}" cy="${p.y}" r="6" fill="rgba(236, 72, 153, 1)" stroke="white" stroke-width="2"/>
+                            <text x="${p.x}" y="${p.y - 12}" text-anchor="middle" font-size="11" font-weight="bold" 
+                                  fill="rgba(236, 72, 153, 1)">${p.val.toFixed(0)} BPM</text>
+                        </g>
+                    `).join('')}
+                    
+                    <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + chartHeight}" 
+                          stroke="#9ca3af" stroke-width="2"/>
+                    <line x1="${padding.left}" y1="${padding.top + chartHeight}" x2="${width - padding.right}" 
+                          y2="${padding.top + chartHeight}" stroke="#9ca3af" stroke-width="2"/>
+                    
+                    <g class="x-labels">
+                        ${xLabels.map((label, i) => {
+                            const x = padding.left + (i / (labelCount - 1 || 1)) * chartWidth;
+                            return `
+                                <g transform="translate(${x}, ${padding.top + chartHeight + 20})">
+                                    <text text-anchor="middle" font-size="12" fill="#374151" font-weight="bold">${label}</text>
+                                    <line x1="0" y1="-5" x2="0" y2="5" stroke="#9ca3af" stroke-width="1"/>
+                                </g>
+                            `;
+                        }).join('')}
+                    </g>
+                    
+                    <text x="${padding.left - 50}" y="${padding.top + chartHeight/2}" 
+                          transform="rotate(-90, ${padding.left - 70}, ${padding.top + chartHeight/2})"
+                          text-anchor="middle" font-size="14" font-weight="bold" fill="#374151">
+                        Frecuencia Cardíaca (BPM)
+                    </text>
+                    
+                    <text x="${width/2}" y="${height - 20}" text-anchor="middle" font-size="14" font-weight="bold" fill="#374151">
+                        Días de la Semana
+                    </text>
+                    
+                    <rect x="${width - 200}" y="${padding.top}" width="160" height="50" rx="4" fill="white" 
+                          stroke="#e5e7eb" stroke-width="1"/>
+                    <circle cx="${width - 165}" cy="${padding.top + 25}" r="6" fill="rgba(236, 72, 153, 1)" stroke="white" stroke-width="1"/>
+                    <text x="${width - 150}" y="${padding.top + 30}" font-size="12" fill="#374151">Pulsaciones</text>
+                    
                 </svg>`;
                 
                 return svg;
@@ -349,11 +414,32 @@ Frecuencia Cardíaca
                     
                     const data = await response.json();
                     const registros = data.ultimos_registros;
-                    const pulsaciones = registros.map(item => parseFloat(item.pulsaciones));
+                    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                    const pulsacionesPorDia = new Array(diasSemana.length).fill(null);
+                    const hoy = new Date();
+                    const diaSemanaActual = (hoy.getDay() + 6) % 7;
+                    const maxIndex = Math.min(diaSemanaActual, diasSemana.length - 1);
+
+                    registros.forEach(item => {
+                        const partes = (item.fecha_control || '').split(' ')[0].split('/');
+                        if (partes.length !== 2) return;
+                        const dia = parseInt(partes[0], 10);
+                        const mes = parseInt(partes[1], 10);
+                        if (Number.isNaN(dia) || Number.isNaN(mes)) return;
+
+                        const fecha = new Date(hoy.getFullYear(), mes - 1, dia);
+                        const idx = (fecha.getDay() + 6) % 7;
+                        if (idx >= 0 && idx < diasSemana.length) {
+                            const pulso = parseFloat(item.pulsaciones);
+                            if (!Number.isNaN(pulso)) {
+                                pulsacionesPorDia[idx] = pulso;
+                            }
+                        }
+                    });
                     
                     const chartContainer = document.querySelector(`[data-chart-id="${collar.idCollar}"]`);
                     if (chartContainer) {
-                        chartContainer.innerHTML = this.generateSVGChart(pulsaciones);
+                        chartContainer.innerHTML = this.generateSVGChart(pulsacionesPorDia, diasSemana, maxIndex);
                     }
                     
                     this.showSpinner[collar.idCollar] = false;

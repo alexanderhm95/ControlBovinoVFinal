@@ -127,6 +127,15 @@ Reportes
         color: #ffffff;
     }
 
+    .blink-active {
+        animation: blink 1s linear infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+
     @media (max-width: 768px) {
         .table-responsive {
             display: block;
@@ -153,14 +162,17 @@ Reportes
                 <!-- Formulario de búsqueda por fecha -->
                 <div class="w-[80%] flex items-center justify-between mb-8 bg-gray-100 p-4 rounded-lg shadow-md">
                     <div class="flex items-center gap-2">
-                        <form method="get" action="" class="flex gap-2">
+                        <form method="get" action="" class="flex gap-2 items-center">
                             <input id="fecha" class="form-control border border-gray-300 rounded-lg px-4 py-2" type="date" name="fecha_busqueda" value="{{ fecha_busqueda }}">
                             <button id="buscarBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition ease-in-out duration-300 shadow-md hover:shadow-lg" type="submit">
                                 <i class="bi bi-search"></i> Buscar
                             </button>
+                            <button id="limpiarBtn" class="hidden bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-3 rounded-lg transition ease-in-out duration-300 shadow-md hover:shadow-lg" type="button" aria-label="Limpiar fecha">
+                                <i class="fa fa-broom"></i>
+                            </button>
                         </form>
                     </div>
-                    <a href="{% url 'generar_pdf' %}" class="bg-red-400 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition ease-in-out duration-300 shadow-md hover:shadow-lg flex items-center gap-2">
+                    <a href="{% url 'generar_pdf' %}{% if fecha_busqueda %}?fecha_busqueda={{ fecha_busqueda }}{% endif %}" class="bg-red-400 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg transition ease-in-out duration-300 shadow-md hover:shadow-lg flex items-center gap-2 {% if pdf_disabled %}opacity-50 pointer-events-none cursor-not-allowed{% endif %}" aria-disabled="{% if pdf_disabled %}true{% else %}false{% endif %}">
                         <i class="fa fa-file-pdf"></i> Descargar PDF
                     </a>
                 </div>
@@ -203,4 +215,28 @@ Reportes
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const fechaInput = document.getElementById('fecha');
+        const limpiarBtn = document.getElementById('limpiarBtn');
+        if (!fechaInput || !limpiarBtn) return;
+
+        const actualizarBoton = () => {
+            const tieneValor = Boolean(fechaInput.value);
+            limpiarBtn.classList.toggle('hidden', !tieneValor);
+            limpiarBtn.classList.toggle('blink-active', tieneValor);
+        };
+
+        actualizarBoton();
+
+        fechaInput.addEventListener('input', actualizarBoton);
+        fechaInput.addEventListener('change', actualizarBoton);
+
+        limpiarBtn.addEventListener('click', () => {
+            fechaInput.value = '';
+            actualizarBoton();
+            fechaInput.form?.submit();
+        });
+    });
+</script>
 {% endblock %}

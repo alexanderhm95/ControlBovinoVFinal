@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views import View
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 # Local imports
 from temp_car.forms import PersonalInfoForm, EditPersonalInfoForm, EditUserForm
@@ -26,6 +27,7 @@ from temp_car.models import PersonalInfo
 # AUTENTICACIÓN
 ####################################
 
+@ensure_csrf_cookie
 def user_login(request):
     """
     Vista de inicio de sesión de usuarios

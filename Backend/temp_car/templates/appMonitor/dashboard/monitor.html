@@ -210,38 +210,57 @@ Monitoreo
                 });
             },
             
-            generateSVGChart(temps, pulses) {
-                const width = 800, height = 400;
-                const padding = { top: 40, right: 40, bottom: 40, left: 60 };
+            generateSVGChart(temps, pulses, xLabels = [], maxIndex = null) {
+                const width = 820, height = 340;
+                const padding = { top: 20, right: 50, bottom: 50, left: 50 };
                 const chartWidth = width - padding.left - padding.right;
                 const chartHeight = height - padding.top - padding.bottom;
                 
                 if (!temps || !pulses || temps.length === 0) {
-                    return `<svg width="100%" height="100%" color: #193b80; font-family: Arial, sans-serif;  viewBox="0 0 ${width} ${height}">
+                    return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">
+                        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Sin datos</text>
+                    </svg>`;
+                }
+
+                const labelCount = xLabels.length || temps.length;
+                const lastIndex = maxIndex === null ? labelCount - 1 : Math.min(maxIndex, labelCount - 1);
+                const safeTemps = temps.slice(0, lastIndex + 1);
+                const safePulses = pulses.slice(0, lastIndex + 1);
+
+                const numericTemps = safeTemps.filter(v => typeof v === 'number' && !Number.isNaN(v));
+                const numericPulses = safePulses.filter(v => typeof v === 'number' && !Number.isNaN(v));
+
+                if (numericTemps.length === 0 && numericPulses.length === 0) {
+                    return `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">
                         <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Sin datos</text>
                     </svg>`;
                 }
                 
-                const allVals = [...temps, ...pulses];
-                const minTemp = Math.min(...temps) - 1;
-                const maxTemp = Math.max(...temps) + 1;
-                const minPulse = Math.min(...pulses) - 5;
-                const maxPulse = Math.max(...pulses) + 5;
+                const minTemp = numericTemps.length ? Math.min(...numericTemps) - 1 : 0;
+                const maxTemp = numericTemps.length ? Math.max(...numericTemps) + 1 : 1;
+                const minPulse = numericPulses.length ? Math.min(...numericPulses) - 5 : 0;
+                const maxPulse = numericPulses.length ? Math.max(...numericPulses) + 5 : 1;
                 
                 const tempRange = maxTemp - minTemp || 1;
                 const pulseRange = maxPulse - minPulse || 1;
                 
-                const tempPoints = temps.map((val, i) => {
-                    const x = padding.left + (i / (temps.length - 1 || 1)) * chartWidth;
-                    const y = padding.top + chartHeight - ((val - minTemp) / tempRange) * chartHeight;
-                    return { x, y };
-                });
+                const tempPoints = safeTemps
+                    .map((val, i) => ({ val, i }))
+                    .filter(p => typeof p.val === 'number' && !Number.isNaN(p.val))
+                    .map(p => {
+                        const x = padding.left + (p.i / (labelCount - 1 || 1)) * chartWidth;
+                        const y = padding.top + chartHeight - ((p.val - minTemp) / tempRange) * chartHeight;
+                        return { x, y, val: p.val };
+                    });
                 
-                const pulsePoints = pulses.map((val, i) => {
-                    const x = padding.left + (i / (pulses.length - 1 || 1)) * chartWidth;
-                    const y = padding.top + chartHeight - ((val - minPulse) / pulseRange) * chartHeight;
-                    return { x, y };
-                });
+                const pulsePoints = safePulses
+                    .map((val, i) => ({ val, i }))
+                    .filter(p => typeof p.val === 'number' && !Number.isNaN(p.val))
+                    .map(p => {
+                        const x = padding.left + (p.i / (labelCount - 1 || 1)) * chartWidth;
+                        const y = padding.top + chartHeight - ((p.val - minPulse) / pulseRange) * chartHeight;
+                        return { x, y, val: p.val };
+                    });
                 
                 // Función para generar curva Bezier suave
                 const generateCurve = (points) => {
@@ -265,7 +284,7 @@ Monitoreo
                 const tempPath = generateCurve(tempPoints);
                 const pulsePath = generateCurve(pulsePoints);
                 
-                let svg = `<svg width="70%" height="100%" display: flex; justify-content: center; align-items: center;  viewBox="0 0 ${width} ${height} " >
+                let svg = `<svg width="100%" height="80%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">
                     <defs>
                         <linearGradient id="grad-temp" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" style="stop-color:rgba(255,99,132,0.3);stop-opacity:1" />
@@ -276,6 +295,8 @@ Monitoreo
                             <stop offset="100%" style="stop-color:rgba(54,162,235,0);stop-opacity:1" />
                         </linearGradient>
                     </defs>
+
+                    <rect x="${padding.left}" y="${padding.top}" width="${chartWidth}" height="${chartHeight}" fill="#f9fafb" rx="4"/>
                     
                     <!-- Temperatura área -->
                     <path d="${tempPath} L ${tempPoints[tempPoints.length-1].x} ${padding.top + chartHeight} L ${padding.left} ${padding.top + chartHeight} Z" 
@@ -292,22 +313,58 @@ Monitoreo
                 
                 // Puntos temperatura
                 tempPoints.forEach(p => {
-                    svg += `<circle cx="${p.x}" cy="${p.y}" r="2" fill="rgba(255, 99, 132, 1)" stroke="white" stroke-width="1"/>`;
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="rgba(255, 99, 132, 1)" stroke="white" stroke-width="1"/>`;
                 });
                 
                 // Puntos pulsaciones
                 pulsePoints.forEach(p => {
-                    svg += `<circle cx="${p.x}" cy="${p.y}" r="2" fill="rgba(54, 162, 235, 1)" stroke="white" stroke-width="1"/>`;
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="rgba(54, 162, 235, 1)" stroke="white" stroke-width="1"/>`;
                 });
                 
                 svg += `
                     <!-- Ejes -->
                     <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${padding.top + chartHeight}" stroke="#64758f" stroke-width="1"/>
+                    <line x1="${width - padding.right}" y1="${padding.top}" x2="${width - padding.right}" y2="${padding.top + chartHeight}" stroke="#64758f" stroke-width="1"/>
                     <line x1="${padding.left}" y1="${padding.top + chartHeight}" x2="${width - padding.right}" y2="${padding.top + chartHeight}" stroke="#3a5885" stroke-width="1"/>
+
+                    <!-- Escala Temperatura (izquierda) -->
+                    ${Array.from({length: 6}).map((_, i) => {
+                        const value = minTemp + (i * (tempRange / 5));
+                        const y = padding.top + chartHeight - ((value - minTemp) / tempRange) * chartHeight;
+                        return `
+                            <line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" 
+                                  stroke="#e5e7eb" stroke-width="1" stroke-dasharray="4"/>
+                            <text x="${padding.left - 10}" y="${y + 4}" text-anchor="end" 
+                                  font-size="12" fill="#6b7280">${value.toFixed(1)}°C</text>
+                        `;
+                    }).join('')}
+
+                    <!-- Escala Pulsaciones (derecha) -->
+                    ${Array.from({length: 6}).map((_, i) => {
+                        const value = minPulse + (i * (pulseRange / 5));
+                        const y = padding.top + chartHeight - ((value - minPulse) / pulseRange) * chartHeight;
+                        return `
+                            <text x="${width - padding.right + 10}" y="${y + 4}" text-anchor="start" 
+                                  font-size="12" fill="#6b7280">${value.toFixed(0)} BPM</text>
+                        `;
+                    }).join('')}
+
+                    <!-- Etiquetas X (días) -->
+                    <g class="x-labels">
+                        ${xLabels.map((label, i) => {
+                            const x = padding.left + (i / (labelCount - 1 || 1)) * chartWidth;
+                            return `
+                                <g transform="translate(${x}, ${padding.top + chartHeight + 20})">
+                                    <text text-anchor="middle" font-size="12" fill="#374151" font-weight="bold">${label}</text>
+                                    <line x1="0" y1="-5" x2="0" y2="5" stroke="#9ca3af" stroke-width="1"/>
+                                </g>
+                            `;
+                        }).join('')}
+                    </g>
                     
                     <!-- Legendas -->
                     <text x="${width - padding.left - 100}" y="${padding.top + 10}" font-size="12" fill="rgba(255, 99, 132, 1)">● Temp(°C)</text>
-                    <text x="${width - padding.left - 100}" y="${padding.top + 25}" font-size="12" fill="rgba(54, 162, 235, 1)">● Pulse(bpm)</text>
+                    <text x="${width - padding.left - 100}" y="${padding.top + 25}" font-size="12" fill="rgba(54, 162, 235, 1)">● Puls(bpm)</text>
                 </svg>`;
                 
                 return svg;
@@ -330,12 +387,37 @@ Monitoreo
                     
                     this.collareData[collar.idCollar] = collareInfo;
                     
-                    const temperaturas = registros.map(item => parseFloat(item.temperatura));
-                    const pulsaciones = registros.map(item => parseFloat(item.pulsaciones));
+                    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+                    const temperaturas = new Array(diasSemana.length).fill(null);
+                    const pulsaciones = new Array(diasSemana.length).fill(null);
+                    const hoy = new Date();
+                    const diaSemanaActual = (hoy.getDay() + 6) % 7;
+                    const maxIndex = Math.min(diaSemanaActual, diasSemana.length - 1);
+
+                    registros.forEach(item => {
+                        const partes = (item.fecha_control || '').split(' ')[0].split('/');
+                        if (partes.length !== 2) return;
+                        const dia = parseInt(partes[0], 10);
+                        const mes = parseInt(partes[1], 10);
+                        if (Number.isNaN(dia) || Number.isNaN(mes)) return;
+
+                        const fecha = new Date(hoy.getFullYear(), mes - 1, dia);
+                        const idx = (fecha.getDay() + 6) % 7;
+                        if (idx >= 0 && idx < diasSemana.length) {
+                            const temp = parseFloat(item.temperatura);
+                            const pulse = parseFloat(item.pulsaciones);
+                            if (!Number.isNaN(temp)) {
+                                temperaturas[idx] = temp;
+                            }
+                            if (!Number.isNaN(pulse)) {
+                                pulsaciones[idx] = pulse;
+                            }
+                        }
+                    });
                     
                     const chartContainer = document.querySelector(`[data-chart-id="${collar.idCollar}"]`);
                     if (chartContainer) {
-                        chartContainer.innerHTML = this.generateSVGChart(temperaturas, pulsaciones);
+                        chartContainer.innerHTML = this.generateSVGChart(temperaturas, pulsaciones, diasSemana, maxIndex);
                     }
                     
                     this.showSpinner[collar.idCollar] = false;
